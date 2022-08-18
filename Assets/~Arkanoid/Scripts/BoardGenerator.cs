@@ -1,5 +1,5 @@
-using System.Collections;
-using System.Collections.Generic;
+using Gamelogic.Extensions;
+using NaughtyAttributes;
 using UnityEngine;
 
 public class BoardGenerator : MonoBehaviour
@@ -17,37 +17,70 @@ public class BoardGenerator : MonoBehaviour
     [SerializeField] int _blockRowCount;
 
     [Header("Blocks")]
-    [SerializeField] GameObject _blockPrefab;
+    [SerializeField] SpriteRenderer _blockPrefab;
 
+    [SerializeField] int _debugBlockX;
+    [SerializeField] int _debugBlockY;
+
+    private float _boardWidth;
+    private float _boardHeight;
+    private Rect _boardBounds;
+
+    private Vector2 _blockWorldSize;
+
+
+    private void CaclulateBoardValues()
+    {
+        _boardWidth = _blockWidth * _blockColumnCount;
+        _boardHeight = _blockHeight * _blockRowCount;
+
+        _boardBounds =
+            new Rect(
+                _mainCamera.pixelWidth / 2f - _boardWidth / 2f,
+                _mainCamera.pixelHeight - _boardHeight - _topOffset,
+                _boardWidth,
+                _boardHeight
+            );
+
+        _blockWorldSize = _mainCamera.ScreenToWorldPoint(new Vector2(_blockWidth, _blockHeight)) - _mainCamera.ScreenToWorldPoint(Vector2.zero);
+    }
 
     private void OnDrawGizmos()
     {
-        float boardWidth = _blockWidth * _blockColumnCount;
-        float boardHeight = _blockHeight * _blockRowCount;
-        float z = 1f;
+        CaclulateBoardValues();
 
-        Rect boardBounds =
-            new Rect(
-                _mainCamera.pixelWidth / 2f - boardWidth / 2f,
-                _mainCamera.pixelHeight - boardHeight - _topOffset,
-                boardWidth,
-                boardHeight
-            );
+        float gridZ = 1f;
 
         Gizmos.color = Color.red;
         for (int i = 0; i <= _blockColumnCount; i++)
             Gizmos.DrawLine(
-                _mainCamera.ScreenToWorldPoint(new Vector3(boardBounds.x + _blockWidth * i, boardBounds.y, z)),
-                _mainCamera.ScreenToWorldPoint(new Vector3(boardBounds.x + _blockWidth * i, boardBounds.y + boardHeight, z))
+                _mainCamera.ScreenToWorldPoint(new Vector3(_boardBounds.x + _blockWidth * i, _boardBounds.y, gridZ)),
+                _mainCamera.ScreenToWorldPoint(new Vector3(_boardBounds.x + _blockWidth * i, _boardBounds.y + _boardHeight, gridZ))
             );
 
         for (int i = 0; i <= _blockRowCount; i++)
             Gizmos.DrawLine(
-                _mainCamera.ScreenToWorldPoint(new Vector3(boardBounds.x, boardBounds.y + _blockHeight * i, z)),
-                _mainCamera.ScreenToWorldPoint(new Vector3(boardBounds.x + boardWidth, boardBounds.y + _blockHeight * i, z))
+                _mainCamera.ScreenToWorldPoint(new Vector3(_boardBounds.x, _boardBounds.y + _blockHeight * i, gridZ)),
+                _mainCamera.ScreenToWorldPoint(new Vector3(_boardBounds.x + _boardWidth, _boardBounds.y + _blockHeight * i, gridZ))
             );
+
+        Gizmos.color = Color.blue;
+
     }
 
+
+    [Button]
+    private void GenerateBlocks()
+    {
+        CaclulateBoardValues();
+
+        Vector3 blockPosition =
+            new Vector2(_boardBounds.x, _boardBounds.y + _boardHeight) +
+            new Vector2(_debugBlockX * _blockWidth, -_debugBlockY * _blockHeight);
+
+        SpriteRenderer block = Instantiate<SpriteRenderer>(_blockPrefab, _mainCamera.ScreenToWorldPoint(blockPosition).WithZ(0f), Quaternion.identity);
+        block.size = _blockWorldSize;
+    }
 
 
 }
