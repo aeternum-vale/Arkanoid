@@ -4,23 +4,24 @@ using UnityEngine;
 
 public class BoardGenerator : MonoBehaviour
 {
-    [SerializeField] Camera _mainCamera;
+    [SerializeField] private Camera _mainCamera;
 
     [Header("Grid")]
 
-    [SerializeField] float _topOffset;
+    [SerializeField] private float _topOffset;
 
-    [SerializeField] float _blockWidth;
-    [SerializeField] float _blockHeight;
+    [SerializeField] private float _blockWidth;
+    [SerializeField] private float _blockHeight;
 
-    [SerializeField] int _blockColumnCount;
-    [SerializeField] int _blockRowCount;
+    [SerializeField] private int _blockColumnCount;
+    [SerializeField] private int _blockRowCount;
 
     [Header("Blocks")]
-    [SerializeField] SpriteRenderer _blockPrefab;
+    [SerializeField] private Transform _blocksParent;
+    [SerializeField] private SpriteRenderer _blockPrefab;
 
-    [SerializeField] int _debugBlockX;
-    [SerializeField] int _debugBlockY;
+    [SerializeField] private int _debugBlockX;
+    [SerializeField] private int _debugBlockY;
 
     private float _boardWidth;
     private float _boardHeight;
@@ -65,7 +66,6 @@ public class BoardGenerator : MonoBehaviour
             );
 
         Gizmos.color = Color.blue;
-
     }
 
 
@@ -78,8 +78,9 @@ public class BoardGenerator : MonoBehaviour
             new Vector2(_boardBounds.x, _boardBounds.y + _boardHeight) +
             new Vector2(_debugBlockX * _blockWidth, -_debugBlockY * _blockHeight);
 
-        SpriteRenderer block = Instantiate<SpriteRenderer>(_blockPrefab, _mainCamera.ScreenToWorldPoint(blockPosition).WithZ(0f), Quaternion.identity);
+        SpriteRenderer block = Instantiate<SpriteRenderer>(_blockPrefab, _mainCamera.ScreenToWorldPoint(blockPosition).WithZ(0f), Quaternion.identity, _blocksParent);
         block.size = _blockWorldSize;
+        block.name = $"block_{_debugBlockX}-{_debugBlockY}";
     }
 
 
