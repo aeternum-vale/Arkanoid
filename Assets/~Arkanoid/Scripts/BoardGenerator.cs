@@ -18,7 +18,7 @@ public class BoardGenerator : MonoBehaviour
 
     [Header("Blocks")]
     [SerializeField] private Transform _blocksParent;
-    [SerializeField] private SpriteRenderer _blockPrefab;
+    [SerializeField] private Block _blockPrefab;
 
     [SerializeField] private int _debugBlockX;
     [SerializeField] private int _debugBlockY;
@@ -77,11 +77,10 @@ public class BoardGenerator : MonoBehaviour
         Vector3 blockPosition =
             new Vector2(_boardBounds.x, _boardBounds.y + _boardHeight) +
             new Vector2(_debugBlockX * _blockWidth, -_debugBlockY * _blockHeight);
+        blockPosition = _mainCamera.ScreenToWorldPoint(blockPosition).WithZ(0f);
 
-        SpriteRenderer block = Instantiate<SpriteRenderer>(_blockPrefab, _mainCamera.ScreenToWorldPoint(blockPosition).WithZ(0f), Quaternion.identity, _blocksParent);
-        block.size = _blockWorldSize;
-        block.name = $"block_{_debugBlockX}-{_debugBlockY}";
+        Block block = Instantiate<Block>(_blockPrefab, _blocksParent);
+        block.SetPositionAndSize(blockPosition, _blockWorldSize, $"block_{_debugBlockX}-{_debugBlockY}");
     }
-
 
 }
