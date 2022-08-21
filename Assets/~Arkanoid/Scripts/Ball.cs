@@ -8,7 +8,7 @@ public class Ball : MonoBehaviour
     public event Action BottomHit;
 
     [SerializeField] private Rigidbody2D _rigidBody;
-    [SerializeField] private Vector3 _directionVector = new Vector3(1f, 1f, 0f);
+    [SerializeField] private Vector3 _direction = new Vector3(1f, 1f, 0f);
     [SerializeField] private float _speed = 1f;
     [SerializeField] private float _sliderRedirectionAngle = 80f;
     [ReadOnly] [SerializeField] private GameObject _lastCollision;
@@ -18,8 +18,32 @@ public class Ball : MonoBehaviour
     private bool _hasCollisionWithSlider = false;
 
     public bool IsMoving = false;
+    public bool IsAlmighty = false;
 
-    public Vector3 DirectionVector { get => _directionVector; set => _directionVector = value; }
+
+    private Vector3 _inititalPosition;
+    private Vector3 _initialDirection;
+
+
+    private void Awake()
+    {
+        _inititalPosition = transform.position;
+        _initialDirection = _direction;
+
+    }
+
+    public void RestoreInititalState()
+    {
+        transform.position = _inititalPosition;
+        _direction = _initialDirection;
+
+        _hasCollision = false;
+        _hasCollisionWithSlider = false;
+        _lastCollision = null;
+
+        IsMoving = false;
+        IsAlmighty = false;
+    }
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
@@ -46,13 +70,16 @@ public class Ball : MonoBehaviour
         var sb = collision.collider.bounds;
         var sliderX = Mathf.Abs(px - (sb.center.x - sb.extents.x));
         float sliderRelativeX = sliderX / sb.size.x;
-        _directionVector =
+        _direction =
             Quaternion.Euler(0, 0, _sliderRedirectionAngle * (.5f - sliderRelativeX)) * Vector2.up;
-        _directionVector = _directionVector.normalized;
+        _direction = _direction.normalized;
     }
 
     private void HandleCollisionWithNotSlider(Vector2 normal)
     {
+        if (IsAlmighty && _lastCollision.layer.Equals(Constants.BlocksLayer))
+            BlockHit?.Invoke(_lastCollision);
+
         if (!_hasCollision)
             _collisionNormal = normal;
         else if (GetVectorDirectness(normal) > GetVectorDirectness(_collisionNormal))
@@ -61,28 +88,32 @@ public class Ball : MonoBehaviour
 
     private void Update()
     {
+        bool isBlock = false;
         if (!_hasCollisionWithSlider && _hasCollision)
         {
             if (_lastCollision.layer.Equals(Constants.BlocksLayer))
-                BlockHit?.Invoke(_lastCollision);
+                isBlock = true;
 
             if (_lastCollision.layer.Equals(Constants.BottomLayer))
                 BottomHit?.Invoke();
 
-            _directionVector = Vector3.Reflect(_directionVector, _collisionNormal).normalized;
+            if (!isBlock || !IsAlmighty)
+                _direction = Vector3.Reflect(_direction, _collisionNormal).normalized;
         }
 
         _hasCollision = false;
         _hasCollisionWithSlider = false;
 
         Move();
+
+        if (isBlock) BlockHit?.Invoke(_lastCollision);
     }
 
     private void Move()
     {
         if (!IsMoving) return;
 
-        Vector3 nextPosition = transform.position + _directionVector * _speed;
+        Vector3 nextPosition = transform.position + _direction * _speed;
         _rigidBody.MovePosition(nextPosition);
     }
 
@@ -95,5 +126,5 @@ public class Ball : MonoBehaviour
         return 1f - Mathf.Min(dotAbs, 1f - dotAbs);
     }
 
-    
+
 }

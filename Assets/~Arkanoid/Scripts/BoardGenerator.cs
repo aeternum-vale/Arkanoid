@@ -4,10 +4,11 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Random = System.Random;
+using System.Linq;
 
 public class BoardGenerator : MonoBehaviour
 {
-    private enum Pattern { Horizontal, Vertical, DiagRight, DiagLeft, Circle }
+    private enum EPattern { Horizontal, Vertical, DiagRight, DiagLeft, Circle }
 
     [SerializeField] private Camera _mainCamera;
 
@@ -24,6 +25,8 @@ public class BoardGenerator : MonoBehaviour
     [Header("Blocks")]
     [SerializeField] private Transform _blocksParent;
     [SerializeField] private Block[] _blockPrefabs;
+    private Block[] _simpleBlockPrefabs;
+    private Block[] _powerUpBlockPrefabs;
 
     [SerializeField] private int _seed;
 
@@ -32,11 +35,21 @@ public class BoardGenerator : MonoBehaviour
     private Rect _boardBounds;
 
     private Vector2 _blockWorldSize;
-    private bool[,] _blocksMask;
+    private bool[,] _simpleBlocksMask;
+    private bool[,] _powerUpBlocksMask;
     private Random _random;
+
+
+    private void Awake()
+    {
+        CaclulateBoardValues();
+    }
 
     private void CaclulateBoardValues()
     {
+        _simpleBlockPrefabs = _blockPrefabs.Where(e => e.PowerUpType == EPowerUpType.None).ToArray();
+        _powerUpBlockPrefabs = _blockPrefabs.Where(e => e.PowerUpType != EPowerUpType.None).ToArray();
+
         _boardWidth = _blockWidth * _blockColumnCount;
         _boardHeight = _blockHeight * _blockRowCount;
 
@@ -51,6 +64,188 @@ public class BoardGenerator : MonoBehaviour
         _blockWorldSize = _mainCamera.ScreenToWorldPoint(new Vector2(_blockWidth, _blockHeight)) - _mainCamera.ScreenToWorldPoint(Vector2.zero);
     }
 
+    [Button]
+    private void GenerateRandomBoard()
+    {
+        GenerateRandomBoard(_seed);
+    }
+
+    public List<Block> GenerateRandomBoard(int seed)
+    {
+        List<Block> blockInstances = new List<Block>();
+
+        DestroyAllBlocks();
+
+        _random = new Random(seed);
+        _simpleBlocksMask = new bool[_blockColumnCount, _blockRowCount];
+        _powerUpBlocksMask = new bool[_blockColumnCount, _blockRowCount];
+
+        int figuresCount = _random.Next(5, 10);
+        for (int i = 0; i < figuresCount; i++)
+            ApplyRandomFigureToSimpleMask();
+
+        Array values = Enum.GetValues(typeof(EPattern));
+        EPattern randomPattern = (EPattern)values.GetValue(_random.Next(values.Length));
+
+        FillPowerUpMask();
+
+        for (int i = 0; i < _simpleBlocksMask.GetLength(0); i++)
+            for (int j = 0; j < _simpleBlocksMask.GetLength(1); j++)
+            {
+                if (_powerUpBlocksMask[i, j])
+                {
+                    var prefab = _powerUpBlockPrefabs[_random.Next(_powerUpBlockPrefabs.Length)];
+                    blockInstances.Add(GenerateBlockInstance(i, j, prefab));
+                    continue;
+                }
+
+                if (_simpleBlocksMask[i, j])
+                    blockInstances.Add(GenerateSimpleBlockInstance(i, j, randomPattern));
+            }
+
+        return blockInstances;
+    }
+
+    private void FillPowerUpMask()
+    {
+        int powerUpCount = 10 * GetSimpleBlockMaskWeight() / (_blockRowCount * _blockColumnCount);
+        bool even = powerUpCount % 2 == 0;
+        int powerUpEvenCount = even ? powerUpCount : powerUpCount - 1;
+
+        for (int i = 0; i < powerUpEvenCount / 2; i++)
+            ApplyTwoPowerUpBlocks();
+
+        if (!even)
+            ApplyOnePowerUpBlock();
+    }
+
+    private void ApplyTwoPowerUpBlocks()
+    {
+        var x = _random.Next(_blockColumnCount / 2);
+        var y = _random.Next(_blockRowCount);
+
+        _powerUpBlocksMask[x, y] = true;
+        _powerUpBlocksMask[_blockColumnCount - 1 - x, y] = true;
+    }
+
+    private void ApplyOnePowerUpBlock()
+    {
+        var y = _random.Next(_blockRowCount);
+        _powerUpBlocksMask[_blockColumnCount / 2, y] = true;
+    }
+
+    private Block GenerateSimpleBlockInstance(int x, int y, EPattern pattern)
+    {
+        int prefabIndex = GetPrefabIndexViaPattern(x, y, pattern);
+        return GenerateBlockInstance(x, y, _simpleBlockPrefabs[prefabIndex]);
+    }
+
+    private Block GenerateBlockInstance(int x, int y, Block prefab)
+    {
+        Vector3 blockPosition =
+            new Vector2(_boardBounds.x, _boardBounds.y + _boardHeight) +
+            new Vector2(x * _blockWidth, -y * _blockHeight);
+        blockPosition = _mainCamera.ScreenToWorldPoint(blockPosition).WithZ(0f);
+
+
+        Block block = Instantiate<Block>(prefab, _blocksParent);
+        block.Init(blockPosition, _blockWorldSize, $"block_{x}-{y}");
+        return block;
+    }
+
+    private int GetPrefabIndexViaPattern(int x, int y, EPattern pattern)
+    {
+        int centerX = _blockColumnCount / 2;
+        int centerY = _blockRowCount / 2;
+
+        switch (pattern)
+        {
+            case EPattern.Horizontal:
+                return y % _simpleBlockPrefabs.Length;
+
+            case EPattern.Vertical:
+                return x % _simpleBlockPrefabs.Length;
+
+            case EPattern.DiagRight:
+                return (x + y) % _simpleBlockPrefabs.Length;
+
+            case EPattern.DiagLeft:
+                return Math.Abs(x - y) % _simpleBlockPrefabs.Length;
+
+            case EPattern.Circle:
+                return (int)Math.Round(Math.Sqrt(Sqr(centerX - x) + Sqr(centerY - y))) % _simpleBlockPrefabs.Length;
+
+            default:
+                throw new Exception("invalid pattern");
+        }
+    }
+
+
+    private void DestroyAllBlocks()
+    {
+        while (_blocksParent.childCount > 0)
+            DestroyImmediate(_blocksParent.GetChild(0).gameObject);
+    }
+
+    private void ApplyRandomFigureToSimpleMask()
+    {
+        bool inverse = _random.Next(2) == 0;
+
+        switch (_random.Next(4))
+        {
+            case 0: ApplyCircle(inverse); break;
+            case 1: ApplyRectangle(inverse); break;
+        }
+    }
+
+    private void ApplyCircle(bool inverse)
+    {
+        int radius = _random.Next(1, Math.Min(_blockRowCount, _blockColumnCount) / 2);
+        int centerX = _blockColumnCount / 2;
+        int centerY = _blockRowCount / 2;
+
+        SimpleBlockMaskMap((i, j) => Math.Sqrt(Sqr(centerX - i) + Sqr(centerY - j)) <= radius, inverse);
+    }
+
+    private void ApplyRectangle(bool inverse)
+    {
+        int hwidth = _random.Next(1, _blockColumnCount) / 2;
+        int hheight = _random.Next(1, _blockRowCount) / 2;
+        int centerX = _blockColumnCount / 2;
+        int centerY = _blockRowCount / 2;
+
+        SimpleBlockMaskMap((i, j) =>
+            (i >= centerX - hwidth && i <= centerX + hwidth) &&
+            (j >= centerY - hheight && j <= centerY + hheight),
+            inverse);
+    }
+
+    private void SimpleBlockMaskMap(Func<int, int, bool> setter, bool inverse)
+    {
+        for (int i = 0; i < _simpleBlocksMask.GetLength(0); i++)
+            for (int j = 0; j < _simpleBlocksMask.GetLength(1); j++)
+            {
+                bool val = setter.Invoke(i, j);
+                if (inverse)
+                    _simpleBlocksMask[i, j] = val ? !_simpleBlocksMask[i, j] : _simpleBlocksMask[i, j];
+                else
+                    _simpleBlocksMask[i, j] = val ? true : _simpleBlocksMask[i, j];
+            }
+    }
+
+    private int GetSimpleBlockMaskWeight()
+    {
+        int w = 0;
+        for (int i = 0; i < _simpleBlocksMask.GetLength(0); i++)
+            for (int j = 0; j < _simpleBlocksMask.GetLength(1); j++)
+                if (_simpleBlocksMask[i, j]) w++;
+
+        return w;
+    }
+
+    private static int Sqr(int x) => (int)Math.Pow(x, 2);
+
+#if UNITY_EDITOR
     private void OnDrawGizmos()
     {
         CaclulateBoardValues();
@@ -73,136 +268,11 @@ public class BoardGenerator : MonoBehaviour
         Gizmos.color = Color.blue;
     }
 
-    private Block GenerateBlockInstance(int x, int y, Pattern pattern)
+    private void OnValidate()
     {
         CaclulateBoardValues();
-
-        Vector3 blockPosition =
-            new Vector2(_boardBounds.x, _boardBounds.y + _boardHeight) +
-            new Vector2(x * _blockWidth, -y * _blockHeight);
-        blockPosition = _mainCamera.ScreenToWorldPoint(blockPosition).WithZ(0f);
-
-        int prefabIndex = GetPrefabIndexViaPattern(x, y, pattern);
-
-        Block block = Instantiate<Block>(_blockPrefabs[prefabIndex], _blocksParent);
-        block.Init(blockPosition, _blockWorldSize, $"block_{x}-{y}");
-        return block;
     }
-
-    private int GetPrefabIndexViaPattern(int x, int y, Pattern pattern)
-    {
-        int centerX = _blockColumnCount / 2;
-        int centerY = _blockRowCount / 2;
-
-        switch (pattern)
-        {
-            case Pattern.Horizontal:
-                return y % _blockPrefabs.Length;
-
-            case Pattern.Vertical:
-                return x % _blockPrefabs.Length;
-
-            case Pattern.DiagRight:
-                return (x + y) % _blockPrefabs.Length;
-
-            case Pattern.DiagLeft:
-                return Math.Abs(x - y) % _blockPrefabs.Length;
-
-            case Pattern.Circle:
-                return (int)Math.Round(Math.Sqrt(Sqr(centerX - x) + Sqr(centerY - y))) % _blockPrefabs.Length;
-
-            default:
-                throw new Exception("invalid pattern");
-        }
-    }
-
-    [Button]
-    private void GenerateRandomBoard()
-    {
-        GenerateRandomBoard(_seed);
-    }
-
-
-    public List<Block> GenerateRandomBoard(int seed)
-    {
-        List<Block> blockInstances = new List<Block>();
-
-        DestroyAllBlocks();
-
-        _random = new Random(seed);
-        _blocksMask = new bool[_blockColumnCount, _blockRowCount];
-
-        int figuresCount = _random.Next(5, 10);
-        for (int i = 0; i < figuresCount; i++)
-            ApplyRandomFigureToMask();
-
-        Array values = Enum.GetValues(typeof(Pattern));
-        Pattern randomPattern = (Pattern)values.GetValue(_random.Next(values.Length));
-
-        for (int i = 0; i < _blocksMask.GetLength(0); i++)
-            for (int j = 0; j < _blocksMask.GetLength(1); j++)
-                if (_blocksMask[i, j])
-                    blockInstances.Add(GenerateBlockInstance(i, j, randomPattern));
-
-        return blockInstances;
-    }
-
-    private void DestroyAllBlocks()
-    {
-        while (_blocksParent.childCount > 0)
-        {
-            DestroyImmediate(_blocksParent.GetChild(0).gameObject);
-        }
-    }
-
-    private void ApplyRandomFigureToMask()
-    {
-        bool inverse = _random.Next(2) == 0;
-
-        switch (_random.Next(4))
-        {
-            case 0: ApplyCircle(inverse); break;
-            case 1: ApplyRectangle(inverse); break;
-        }
-
-    }
-
-    private void ApplyCircle(bool inverse)
-    {
-        int radius = _random.Next(1, Math.Min(_blockRowCount, _blockColumnCount) / 2);
-        int centerX = _blockColumnCount / 2;
-        int centerY = _blockRowCount / 2;
-
-        BlockMaskMap((i, j) => Math.Sqrt(Sqr(centerX - i) + Sqr(centerY - j)) <= radius, inverse);
-    }
-
-    private void ApplyRectangle(bool inverse)
-    {
-        int hwidth = _random.Next(1, _blockColumnCount) / 2;
-        int hheight = _random.Next(1, _blockRowCount) / 2;
-        int centerX = _blockColumnCount / 2;
-        int centerY = _blockRowCount / 2;
-
-        BlockMaskMap((i, j) =>
-            (i >= centerX - hwidth && i <= centerX + hwidth) &&
-            (j >= centerY - hheight && j <= centerY + hheight),
-            inverse);
-    }
-
-    private void BlockMaskMap(Func<int, int, bool> setter, bool inverse)
-    {
-        for (int i = 0; i < _blocksMask.GetLength(0); i++)
-            for (int j = 0; j < _blocksMask.GetLength(1); j++)
-            {
-                bool val = setter.Invoke(i, j);
-                if (inverse)
-                    _blocksMask[i, j] = val ? !_blocksMask[i, j] : _blocksMask[i, j];
-                else
-                    _blocksMask[i, j] = val ? true : _blocksMask[i, j];
-            }
-    }
-
-    private static int Sqr(int x) => (int)Math.Pow(x, 2);
+#endif
 }
 
 

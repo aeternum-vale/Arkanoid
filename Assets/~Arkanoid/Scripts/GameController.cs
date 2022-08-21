@@ -28,8 +28,6 @@ public class GameController : MonoBehaviour
 
     [Header("Ball")]
     [SerializeField] private Ball _ball;
-    private Vector3 _ballInititalPosition;
-    private Vector3 _ballInitialDirVector;
 
 
     private void Awake()
@@ -44,8 +42,6 @@ public class GameController : MonoBehaviour
         _sliderRightLimit =
             _mainCamera.ScreenToWorldPoint(new Vector2(_mainCamera.pixelWidth, 0f)).x - _sliderSpriteRenderer.size.x / 2;
 
-        _ballInititalPosition = _ball.transform.position;
-        _ballInitialDirVector = _ball.DirectionVector;
     }
 
 
@@ -123,8 +119,7 @@ public class GameController : MonoBehaviour
         _currentLevel++;
 
         _ball.IsMoving = false;
-        _ball.transform.position = _ballInititalPosition;
-        _ball.DirectionVector = _ballInitialDirVector;
+        _ball.RestoreInititalState();
 
         _sliderTargetX = 0;
         _slider.position = _slider.position.WithX(0);

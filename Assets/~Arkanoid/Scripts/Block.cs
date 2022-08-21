@@ -2,13 +2,17 @@ using NaughtyAttributes;
 using System;
 using UnityEngine;
 
+
 public class Block : MonoBehaviour
 {
     [SerializeField] private SpriteRenderer _spriteRenderer;
     [SerializeField] private BoxCollider2D _boxCollider2D;
+    [SerializeField] private EPowerUpType _powerUpType = EPowerUpType.None;
     [SerializeField] private int _hitPointsMaxNumber;
     [SerializeField] [ReadOnly] private int _hitPointsNumber;
+
     public bool IsAlive { get; private set; } = true;
+    public EPowerUpType PowerUpType => _powerUpType;
 
     private void Awake()
     {
@@ -34,10 +38,10 @@ public class Block : MonoBehaviour
         OnComplete?.Invoke();
     }
 
-    public void OnHitByBall()
+    public void OnHitByBall(bool isAlmighty)
     {
         _hitPointsNumber--;
-        if (_hitPointsNumber <= 0)
+        if (_hitPointsNumber <= 0 || isAlmighty)
         {
             IsAlive = false;
             _boxCollider2D.enabled = false;

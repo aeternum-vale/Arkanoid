@@ -39,7 +39,7 @@ public class BoardController : MonoBehaviour
     {
         Block block = _blocksDictionary[blockGameObject];
 
-        block.OnHitByBall();
+        block.OnHitByBall(_ball.IsAlmighty);
 
         if (!block.IsAlive && AreAllBlocksDemolished())
             AllBlocksDemolished?.Invoke();
