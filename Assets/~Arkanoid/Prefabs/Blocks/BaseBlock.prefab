@@ -11,8 +11,8 @@ GameObject:
   - component: {fileID: 838881309630408733}
   - component: {fileID: 769889423005696392}
   - component: {fileID: 5980859571759676649}
-  m_Layer: 0
-  m_Name: Block
+  m_Layer: 7
+  m_Name: BaseBlock
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -74,6 +74,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _spriteRenderer: {fileID: 7378417821425488556}
   _boxCollider2D: {fileID: 769889423005696392}
+  _hitPointsMaxNumber: 1
+  _hitPointsNumber: 0
 --- !u!1 &4191755005779088088
 GameObject:
   m_ObjectHideFlags: 0
@@ -84,7 +86,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6448067398590550352}
   - component: {fileID: 7378417821425488556}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Sprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}

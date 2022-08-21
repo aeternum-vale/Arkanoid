@@ -1,23 +1,25 @@
 using NaughtyAttributes;
+using System;
 using UnityEngine;
 
 public class Ball : MonoBehaviour
 {
-    [SerializeField] private Vector3 _moveVector = new Vector3(0.1f, -0.1f, 0f);
-    [SerializeField] private Rigidbody2D _rigidBody;
+    public event Action<GameObject> BlockHit;
+    public event Action BottomHit;
 
+    [SerializeField] private Rigidbody2D _rigidBody;
+    [SerializeField] private Vector3 _directionVector = new Vector3(1f, 1f, 0f);
+    [SerializeField] private float _speed = 1f;
+    [SerializeField] private float _sliderRedirectionAngle = 80f;
     [ReadOnly] [SerializeField] private GameObject _lastCollision;
 
-    private Camera _mainCamera;
     private Vector2 _collisionNormal;
     private bool _hasCollision = false;
+    private bool _hasCollisionWithSlider = false;
 
-    private const int SliderLayer = 6;
+    public bool IsMoving = false;
 
-    private void Awake()
-    {
-        _mainCamera = Camera.main;
-    }
+    public Vector3 DirectionVector { get => _directionVector; set => _directionVector = value; }
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
@@ -25,56 +27,73 @@ public class Ball : MonoBehaviour
             Debug.DrawRay(contact.point, contact.normal, Color.blue, 2f);
 
         if (collision.gameObject.Equals(_lastCollision)) return;
+
         var normal = collision.GetContact(0).normal;
 
-        if (collision.gameObject.layer.Equals(6))
-        {
-            if (Vector2.Dot(normal, Vector2.up) >= 0.5)
-            {
-                var px = collision.GetContact(0).point.x;
-                var sb = collision.collider.bounds;
-                var sliderX = Mathf.Abs(px - (sb.center.x - sb.extents.x));
-                float sliderRelativeX = sliderX / sb.size.x;
-                _collisionNormal = Quaternion.Euler(0, 0, 30f * (0.5f - sliderRelativeX)) * Vector2.up;
-            }
-        }
+        if (collision.gameObject.layer.Equals(Constants.SliderLayer))
+            HandleCollisionWithSlider(collision);
         else
-        {
-            if (!_hasCollision)
-                _collisionNormal = normal;
-            else
-            {
-                if (GetVectorDirectness(normal) > GetVectorDirectness(_collisionNormal))
-                    _collisionNormal = normal;
-            }
-        }
-
+            HandleCollisionWithNotSlider(normal);
 
         _hasCollision = true;
         _lastCollision = collision.gameObject;
     }
+    private void HandleCollisionWithSlider(Collision2D collision)
+    {
+        _hasCollisionWithSlider = true;
+
+        var px = collision.GetContact(0).point.x;
+        var sb = collision.collider.bounds;
+        var sliderX = Mathf.Abs(px - (sb.center.x - sb.extents.x));
+        float sliderRelativeX = sliderX / sb.size.x;
+        _directionVector =
+            Quaternion.Euler(0, 0, _sliderRedirectionAngle * (.5f - sliderRelativeX)) * Vector2.up;
+        _directionVector = _directionVector.normalized;
+    }
+
+    private void HandleCollisionWithNotSlider(Vector2 normal)
+    {
+        if (!_hasCollision)
+            _collisionNormal = normal;
+        else if (GetVectorDirectness(normal) > GetVectorDirectness(_collisionNormal))
+            _collisionNormal = normal;
+    }
 
     private void Update()
     {
-        if (_hasCollision)
+        if (!_hasCollisionWithSlider && _hasCollision)
         {
-            _moveVector = Vector3.Reflect(_moveVector, _collisionNormal);
-            Debug.DrawRay(transform.position, _collisionNormal, Color.red, 2f);
+            if (_lastCollision.layer.Equals(Constants.BlocksLayer))
+                BlockHit?.Invoke(_lastCollision);
+
+            if (_lastCollision.layer.Equals(Constants.BottomLayer))
+                BottomHit?.Invoke();
+
+            _directionVector = Vector3.Reflect(_directionVector, _collisionNormal).normalized;
         }
 
         _hasCollision = false;
+        _hasCollisionWithSlider = false;
 
-        var nextPosition = transform.position + _moveVector * Time.deltaTime;
-
-        if (new Rect(0, 0, 1, 1).Contains(_mainCamera.WorldToViewportPoint(nextPosition)))
-            transform.position = nextPosition;
-        else
-            _moveVector *= -1;
+        Move();
     }
 
-    private float GetVectorDirectness(Vector2 vector)
+    private void Move()
+    {
+        if (!IsMoving) return;
+
+        Vector3 nextPosition = transform.position + _directionVector * _speed;
+        _rigidBody.MovePosition(nextPosition);
+    }
+
+    //private bool IsInsideTheScreen(Vector3 point) =>
+    //    new Rect(0, 0, 1, 1).Contains(_mainCamera.WorldToViewportPoint(point));
+
+    private static float GetVectorDirectness(Vector2 vector)
     {
         float dotAbs = Mathf.Abs(Vector2.Dot(vector, Vector2.up));
         return 1f - Mathf.Min(dotAbs, 1f - dotAbs);
     }
+
+    
 }
