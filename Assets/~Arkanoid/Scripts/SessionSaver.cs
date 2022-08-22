@@ -15,17 +15,25 @@ public class SessionSaver
         WriteToFile(JsonConvert.SerializeObject(data));
     }
 
-    public SessionData? RestoreSessionData()
+    public bool TryRestoreSessionData(out SessionData sessionData)
     {
+        sessionData = new SessionData();
         string strdata = ReadFromFile();
-        if (string.IsNullOrEmpty(strdata)) return null;
+        if (string.IsNullOrEmpty(strdata)) return false;
 
-        return JsonConvert.DeserializeObject<SessionData>(strdata);
+        try
+        {
+            sessionData = JsonConvert.DeserializeObject<SessionData>(strdata);
+            return true;
+        }
+        catch { return false; }
     }
+
+    public bool IsSessionFileExist() => File.Exists(SessionFilePath);
 
     private string ReadFromFile()
     {
-        if (!File.Exists(SessionFilePath)) return "";
+        if (!IsSessionFileExist()) return string.Empty;
 
         using (FileStream fstream = File.OpenRead(SessionFilePath))
         {
@@ -46,4 +54,5 @@ public class SessionSaver
             fstream.Write(buffer, 0, buffer.Length);
         }
     }
+
 }

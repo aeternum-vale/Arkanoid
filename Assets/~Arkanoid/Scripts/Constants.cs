@@ -1,11 +1,17 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-public class Constants
+public static class Constants
 {
     public const int SliderLayer = 6;
     public const int BlocksLayer = 7;
     public const int BottomLayer = 8;
+
+    public const string ContinueModeKey = "ContinueModeKey";
+
+    public const int MenuSceneIndex = 0;
+    public const int GameSceneIndex = 1;
+
 }
 
 public enum EPowerUpType { None = 0, AlmightyBall, WiderSlider }
@@ -37,8 +43,9 @@ public struct SimpleVector2D
 public struct SessionData
 {
     public int Level;
-    public List<Indexes2D> DemolishedBlockGridIndexes;
+    public int Lives;
     public int Score;
+    public HashSet<Indexes2D> DemolishedBlockGridIndexes;
     public SimpleVector2D BallPosition;
     public SimpleVector2D BallDirection;
     public float SliderXPosition;

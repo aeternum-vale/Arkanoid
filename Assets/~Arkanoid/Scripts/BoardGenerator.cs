@@ -63,10 +63,10 @@ public class BoardGenerator : MonoBehaviour
     [Button]
     private void GenerateRandomBoard()
     {
-        GenerateRandomBoard(_seed);
+        GenerateBoard(_seed);
     }
 
-    public List<Block> GenerateRandomBoard(int seed)
+    public List<Block> GenerateBoard(int seed, HashSet<Indexes2D> exclude = null)
     {
         List<Block> blockInstances = new List<Block>();
 
@@ -88,6 +88,9 @@ public class BoardGenerator : MonoBehaviour
         for (int i = 0; i < _simpleBlocksMask.GetLength(0); i++)
             for (int j = 0; j < _simpleBlocksMask.GetLength(1); j++)
             {
+                if (exclude != null && exclude.Contains(new Indexes2D(i, j)))
+                    continue;
+
                 if (_powerUpBlocksMask[i, j])
                 {
                     blockInstances.Add(GenerateBlockInstance(i, j, _powerUpBlockPrefab));

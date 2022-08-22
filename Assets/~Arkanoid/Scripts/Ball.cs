@@ -23,7 +23,7 @@ public class Ball : MonoBehaviour
     private Vector3 _inititalPosition;
     private Vector3 _initialDirection;
 
-    public Vector3 Direction  => _direction;
+    public Vector3 Direction { get => _direction; set => _direction = value; }
 
     private void Awake()
     {

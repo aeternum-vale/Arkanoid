@@ -13,11 +13,11 @@ public class BoardController : MonoBehaviour
 
     private List<Block> _blocks;
     private Dictionary<GameObject, Block> _blocksGODictionary;
-    private List<Indexes2D> _demolishedBlockGridIndexes = new List<Indexes2D>();
+    private HashSet<Indexes2D> _demolishedBlockGridIndexes = new HashSet<Indexes2D>();
 
     [SerializeField] private Ball _ball;
 
-    public List<Indexes2D> DemolishedBlockGridIndexes => _demolishedBlockGridIndexes;
+    public HashSet<Indexes2D> DemolishedBlockGridIndexes => _demolishedBlockGridIndexes;
 
     private void Awake()
     {
@@ -27,7 +27,14 @@ public class BoardController : MonoBehaviour
     public void PrepareNewBoard(int level)
     {
         _demolishedBlockGridIndexes.Clear();
-        _blocks = _generator.GenerateRandomBoard(level);
+        _blocks = _generator.GenerateBoard(level);
+        _blocksGODictionary = _blocks.ToDictionary(block => block.gameObject);
+    }
+
+    public void RestoreSession(int level, HashSet<Indexes2D> demolishedBlockGridIndexes)
+    {
+        _demolishedBlockGridIndexes = demolishedBlockGridIndexes;
+        _blocks = _generator.GenerateBoard(level, demolishedBlockGridIndexes);
         _blocksGODictionary = _blocks.ToDictionary(block => block.gameObject);
     }
 
@@ -72,5 +79,6 @@ public class BoardController : MonoBehaviour
     }
 
     private void OnDestroy() => RemoveListeners();
+
 
 }

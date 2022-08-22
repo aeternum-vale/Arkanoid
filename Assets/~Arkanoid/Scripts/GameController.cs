@@ -3,8 +3,8 @@ using Gamelogic.Extensions;
 using NaughtyAttributes;
 using System;
 using System.Threading;
-using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using Random = UnityEngine.Random;
 using ReadOnly = NaughtyAttributes.ReadOnlyAttribute;
 
@@ -40,6 +40,7 @@ public class GameController : MonoBehaviour
         AddListeners();
         _mainCamera = Camera.main;
         _highscore = PlayerPrefs.GetInt(HighscoreKey, 0);
+
     }
 
     private void AddListeners()
@@ -71,6 +72,12 @@ public class GameController : MonoBehaviour
 
     private void Start()
     {
+        if (PlayerPrefs.GetInt(Constants.ContinueModeKey) == 1)
+        {
+            RestoreSessionDataAndStartLevel();
+            return;
+        }
+        
         _level = 1;
         PrepareBoardAndStartLevel();
     }
@@ -153,7 +160,8 @@ public class GameController : MonoBehaviour
 
     private void OnPauseMenuQuitButtonClick()
     {
-        throw new NotImplementedException();
+        ResumeGame();
+        SceneManager.LoadScene(Constants.MenuSceneIndex);
     }
 
     private void OnPauseMenuSaveButtonClick()
@@ -171,6 +179,30 @@ public class GameController : MonoBehaviour
         _sessionSaver.SaveSessionData(sd);
 
         _uiController.ShowSessionSavedMessage();
+    }
+
+    [Button]
+    private void RestoreSessionDataAndStartLevel()
+    {
+        if (_sessionSaver.TryRestoreSessionData(out SessionData sessionData))
+        {
+            RestoreInititalState();
+
+            _boardController.RestoreSession(sessionData.Level, sessionData.DemolishedBlockGridIndexes);
+
+            _ball.transform.position = new Vector3(sessionData.BallPosition.X, sessionData.BallPosition.Y, _ball.transform.position.y);
+            _ball.Direction = new Vector3(sessionData.BallDirection.X, sessionData.BallDirection.Y, 0f);
+
+            _slider.transform.position = _slider.transform.position.WithX(sessionData.SliderXPosition);
+
+            _score = sessionData.Score;
+            _lives = sessionData.Lives;
+            _level = sessionData.Level;
+
+            UpdateLevelStatsUI();
+
+            _ball.IsMoving = true;
+        }
     }
 
     private void OnPauseMenuBackButtonClick()
