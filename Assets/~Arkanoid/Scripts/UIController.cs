@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using System;
 using System.Text;
+using System.Threading;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -31,6 +32,8 @@ public class UIController : MonoBehaviour
     public int Score { set => _scoreText.text = $"Score: {value}"; }
     public int Highscore { set => _highscoreText.text = $"Highscore: {value}"; }
 
+    private CancellationTokenSource _lifetimeCTS;
+
     public bool IsPressButtonToStartMessageShown
     {
         get => _pressButtonToStartMessage.activeSelf;
@@ -45,6 +48,7 @@ public class UIController : MonoBehaviour
     private void Awake()
     {
         AddListeners();
+        _lifetimeCTS = new CancellationTokenSource();
     }
 
     private void AddListeners()
@@ -89,7 +93,7 @@ public class UIController : MonoBehaviour
     public async void ShowSessionSavedMessage()
     {
         _sessionSavedMessage.SetActive(true);
-        await UniTask.Delay(TimeSpan.FromSeconds(3f), DelayType.Realtime);
+        await UniTask.Delay(TimeSpan.FromSeconds(3f), DelayType.Realtime, cancellationToken: _lifetimeCTS.Token);
         _sessionSavedMessage.SetActive(false);
     }
 
@@ -112,6 +116,10 @@ public class UIController : MonoBehaviour
     }
 
 
-    private void OnDestroy() => RemoveListeners();
+    private void OnDestroy()
+    {
+        RemoveListeners();
+        _lifetimeCTS?.Cancel();
+    }
 
 }

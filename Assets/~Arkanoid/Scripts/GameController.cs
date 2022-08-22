@@ -35,12 +35,15 @@ public class GameController : MonoBehaviour
 
     private SessionSaver _sessionSaver = new SessionSaver();
 
+    private CancellationTokenSource _lifetimeCTS;
+
+
     private void Awake()
     {
         AddListeners();
         _mainCamera = Camera.main;
         _highscore = PlayerPrefs.GetInt(HighscoreKey, 0);
-
+        _lifetimeCTS = new CancellationTokenSource();
     }
 
     private void AddListeners()
@@ -180,8 +183,9 @@ public class GameController : MonoBehaviour
         SessionData sd = new SessionData()
         {
             Level = _level,
-            DemolishedBlockGridIndexes = _boardController.DemolishedBlockGridIndexes,
+            Lives = _lives,
             Score = _score,
+            DemolishedBlockGridIndexes = _boardController.DemolishedBlockGridIndexes,
             BallPosition = new SimpleVector2D(_ball.transform.position.x, _ball.transform.position.y),
             BallDirection = new SimpleVector2D(_ball.Direction.x, _ball.Direction.y),
             SliderXPosition = _slider.transform.position.x
@@ -233,7 +237,7 @@ public class GameController : MonoBehaviour
 
         _uiController.ShowGameOverMessage(_score, _highscore);
 
-        await UniTask.WaitUntil(() => Input.anyKey);
+        await UniTask.WaitUntil(() => Input.anyKey, cancellationToken: _lifetimeCTS.Token);
 
         GoToMenuScene();
     }
@@ -268,7 +272,7 @@ public class GameController : MonoBehaviour
         PauseGame();
         _uiController.IsPressButtonToStartMessageShown = true;
 
-        await UniTask.WaitUntil(() => Input.GetKeyDown(KeyCode.Space));
+        await UniTask.WaitUntil(() => Input.GetKeyDown(KeyCode.Space), cancellationToken: _lifetimeCTS.Token);
         _uiController.IsPressButtonToStartMessageShown = false;
         ResumeGame();
     }
@@ -283,5 +287,10 @@ public class GameController : MonoBehaviour
         Time.timeScale = 1;
     }
 
-    private void OnDestroy() => RemoveListeners();
+    private void OnDestroy()
+    {
+        RemoveListeners();
+        _lifetimeCTS?.Cancel();
+        _powerUpCTS?.Cancel();
+    }
 }
