@@ -77,7 +77,7 @@ public class GameController : MonoBehaviour
             RestoreSessionDataAndStartLevel();
             return;
         }
-        
+
         _level = 1;
         PrepareBoardAndStartLevel();
     }
@@ -155,10 +155,15 @@ public class GameController : MonoBehaviour
 
     private void OnAllBlocksDemolished()
     {
-        MoveToNextLevel();
+        GoToNextLevel();
     }
 
     private void OnPauseMenuQuitButtonClick()
+    {
+        GoToMenuScene();
+    }
+
+    private void GoToMenuScene()
     {
         ResumeGame();
         SceneManager.LoadScene(Constants.MenuSceneIndex);
@@ -212,13 +217,25 @@ public class GameController : MonoBehaviour
     }
 
 
-    private void FinishGame()
+    private async void FinishGame()
     {
+        PauseGame();
 
+        if (_score > _highscore)
+        {
+            _highscore = _score;
+            PlayerPrefs.SetInt(HighscoreKey, _highscore);
+        }
+
+        _uiController.ShowGameOverMessage(_score, _highscore);
+
+        await UniTask.WaitUntil(() => Input.anyKey);
+
+        GoToMenuScene();
     }
 
     [Button]
-    private void MoveToNextLevel()
+    private void GoToNextLevel()
     {
         _level++;
 

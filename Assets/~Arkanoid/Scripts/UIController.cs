@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using System;
+using System.Text;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -15,18 +16,22 @@ public class UIController : MonoBehaviour
     [SerializeField] private TMP_Text _scoreText;
     [SerializeField] private TMP_Text _highscoreText;
 
-    [Header("Pause")]
     [SerializeField] private GameObject _pauseMenu;
     [SerializeField] private Button _pauseMenuBackButton;
     [SerializeField] private Button _pauseMenuSaveButton;
     [SerializeField] private Button _pauseMenuQuitButton;
     [SerializeField] private GameObject _sessionSavedMessage;
 
+    [SerializeField] private GameObject _pressButtonToStartMessage;
+    [SerializeField] private GameObject _gameOverMessage;
+    [SerializeField] private TMP_Text _gameOverMessageText;
+
     public int Level { set => _levelText.text = $"Level: {value}"; }
     public int Lives { set => _livesText.text = $"Lives: {value}"; }
     public int Score { set => _scoreText.text = $"Score: {value}"; }
     public int Highscore { set => _highscoreText.text = $"Highscore: {value}"; }
 
+    public bool PressButtonToStartMessage { set => _pressButtonToStartMessage.SetActive(value); }
 
     private void Awake()
     {
@@ -78,6 +83,25 @@ public class UIController : MonoBehaviour
         await UniTask.Delay(TimeSpan.FromSeconds(3f), DelayType.Realtime);
         _sessionSavedMessage.SetActive(false);
     }
+
+    public void ShowGameOverMessage(int score, int highscore)
+    {
+        StringBuilder sb = new StringBuilder();
+        sb.AppendLine("<b>Game Over!</b>");
+        sb.AppendLine();
+        sb.AppendLine($"Your score is {score}");
+        sb.AppendLine($"Highscore is {highscore}");
+
+        _gameOverMessageText.text = sb.ToString();
+
+        _gameOverMessage.SetActive(true);
+    }
+
+    public void HideGameOverMessage()
+    {
+        _gameOverMessage.SetActive(false);
+    }
+
 
     private void OnDestroy() => RemoveListeners();
 
