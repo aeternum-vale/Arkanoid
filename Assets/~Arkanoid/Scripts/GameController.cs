@@ -1,5 +1,8 @@
+using Cysharp.Threading.Tasks;
 using Gamelogic.Extensions;
 using NaughtyAttributes;
+using System;
+using System.Threading;
 using UnityEngine;
 using ReadOnly = NaughtyAttributes.ReadOnlyAttribute;
 
@@ -9,65 +12,83 @@ public class GameController : MonoBehaviour
 
     [SerializeField] [ReadOnly] private int _currentLevel;
 
+    [Space]
     [SerializeField] private int _maxLivesNumber = 3;
     [SerializeField] [ReadOnly] private int _livesNumber = 3;
 
+    [Space]
+    [SerializeField] private float _powerUpIntervalSec = 5f;
+    private CancellationTokenSource _powerUpCTS;
 
-    [Header("Slider")]
-    [SerializeField] private Transform _slider;
-    [SerializeField] [ReadOnly] private float _sliderSpeed = 1f;
-    [SerializeField] private float _sliderInterpolationValue = 0.5f;
-
-    private float _sliderTargetX = 0;
-    private float _sliderLeftLimit;
-    private float _sliderRightLimit;
-    private SpriteRenderer _sliderSpriteRenderer;
-
-    [Header("Board")]
+    [Space]
+    [SerializeField] private Slider _slider;
     [SerializeField] private BoardController _boardController;
-
-    [Header("Ball")]
     [SerializeField] private Ball _ball;
+
 
 
     private void Awake()
     {
         AddListeners();
-
         _mainCamera = Camera.main;
-        _sliderSpriteRenderer = _slider.GetComponent<SpriteRenderer>();
-
-        _sliderLeftLimit =
-            _mainCamera.ScreenToWorldPoint(Vector2.zero).x + _sliderSpriteRenderer.size.x / 2;
-        _sliderRightLimit =
-            _mainCamera.ScreenToWorldPoint(new Vector2(_mainCamera.pixelWidth, 0f)).x - _sliderSpriteRenderer.size.x / 2;
-
-    }
-
-
-    private void Start()
-    {
-        _currentLevel = 1;
-        PrepareAndStartLevel();
-    }
-
-    private void PrepareAndStartLevel()
-    {
-        _boardController.PrepareBoard(_currentLevel);
-        _ball.IsMoving = true;
     }
 
     private void AddListeners()
     {
         _ball.BottomHit += OnBottomHit;
         _boardController.AllBlocksDemolished += OnAllBlocksDemolished;
+        _boardController.BallHitPowerUp += OnBallHitPowerUp;
     }
+
 
     private void RemoveListeners()
     {
         _ball.BottomHit -= OnBottomHit;
         _boardController.AllBlocksDemolished -= OnAllBlocksDemolished;
+        _boardController.BallHitPowerUp -= OnBallHitPowerUp;
     }
+
+    private void Start()
+    {
+        _currentLevel = 1;
+        PrepareBoardAndStartLevel();
+    }
+
+    private async void OnBallHitPowerUp(EPowerUpType powerUpType)
+    {
+        Debug.Log($"PowerUp: {powerUpType}");
+
+
+        switch (powerUpType)
+        {
+            case EPowerUpType.AlmightyBall:
+                _ball.IsAlmighty = true;
+                break;
+            case EPowerUpType.WiderSlider:
+                _slider.Width *= 1.5f;
+                break;
+        }
+
+        _powerUpCTS = new CancellationTokenSource();
+        await UniTask.Delay(TimeSpan.FromSeconds(_powerUpIntervalSec), cancellationToken: _powerUpCTS.Token);
+
+        switch (powerUpType)
+        {
+            case EPowerUpType.AlmightyBall:
+                _ball.IsAlmighty = false;
+                break;
+            case EPowerUpType.WiderSlider:
+                _slider.Width /= 1.5f;
+                break;
+        }
+    }
+
+    private void PrepareBoardAndStartLevel()
+    {
+        _boardController.PrepareBoard(_currentLevel);
+        _ball.IsMoving = true;
+    }
+
 
     private void OnBottomHit()
     {
@@ -83,31 +104,6 @@ public class GameController : MonoBehaviour
     }
 
 
-    private void FixedUpdate()
-    {
-        UpdateSlider();
-    }
-
-    private void UpdateSlider()
-    {
-        _sliderTargetX += Input.GetAxis("Horizontal") * _sliderSpeed;
-        float newX = Mathf.Lerp(_slider.position.x, _sliderTargetX, _sliderInterpolationValue);
-
-        if (newX <= _sliderLeftLimit)
-        {
-            newX = _sliderLeftLimit;
-            _sliderTargetX = _sliderLeftLimit;
-        }
-
-        if (newX >= _sliderRightLimit)
-        {
-            newX = _sliderRightLimit;
-            _sliderTargetX = _sliderRightLimit;
-        }
-
-        _slider.position = _slider.position.WithX(newX);
-    }
-
     private void FinishGame()
     {
 
@@ -118,14 +114,20 @@ public class GameController : MonoBehaviour
     {
         _currentLevel++;
 
+        RestoreInititalState();
+        PrepareBoardAndStartLevel();
+    }
+
+    private void RestoreInititalState()
+    {
+        _powerUpCTS.Cancel();
+
         _ball.IsMoving = false;
         _ball.RestoreInititalState();
 
-        _sliderTargetX = 0;
-        _slider.position = _slider.position.WithX(0);
-
-        PrepareAndStartLevel();
+        _slider.RestoreInititalState();
     }
+
 
     private void OnDestroy() => RemoveListeners();
 }

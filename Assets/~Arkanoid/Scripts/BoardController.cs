@@ -5,6 +5,7 @@ using UnityEngine;
 
 public class BoardController : MonoBehaviour
 {
+    public event Action<EPowerUpType> BallHitPowerUp;
     public event Action AllBlocksDemolished;
 
     [SerializeField] private BoardGenerator _generator;
@@ -40,6 +41,9 @@ public class BoardController : MonoBehaviour
         Block block = _blocksDictionary[blockGameObject];
 
         block.OnHitByBall(_ball.IsAlmighty);
+
+        if (block.PowerUpType != EPowerUpType.None)
+            BallHitPowerUp?.Invoke(block.PowerUpType);
 
         if (!block.IsAlive && AreAllBlocksDemolished())
             AllBlocksDemolished?.Invoke();

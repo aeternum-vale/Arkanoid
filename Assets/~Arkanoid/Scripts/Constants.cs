@@ -7,4 +7,4 @@ public class Constants
     public const int BottomLayer = 8;
 }
 
-public enum EPowerUpType { None = 0, AlmightyBall }
+public enum EPowerUpType { None = 0, AlmightyBall, WiderSlider }
