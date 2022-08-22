@@ -4,16 +4,15 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Random = System.Random;
-using System.Linq;
 
 public class BoardGenerator : MonoBehaviour
 {
-    private enum EPattern { Horizontal, Vertical, DiagRight, DiagLeft, Circle }
+    private enum EPattern
+    { Horizontal, Vertical, DiagRight, DiagLeft, Circle }
 
     [SerializeField] private Camera _mainCamera;
 
     [Header("Grid")]
-
     [SerializeField] private float _topOffset;
 
     [SerializeField] private float _blockWidth;
@@ -24,10 +23,11 @@ public class BoardGenerator : MonoBehaviour
 
     [Header("Blocks")]
     [SerializeField] private Transform _blocksParent;
-    [SerializeField] private Block[] _blockPrefabs;
-    private Block[] _simpleBlockPrefabs;
-    private Block[] _powerUpBlockPrefabs;
 
+    [SerializeField] private Block[] _simpleBlockPrefabs;
+    [SerializeField] private Block _powerUpBlockPrefab;
+
+    [Space]
     [SerializeField] private int _seed;
 
     private float _boardWidth;
@@ -39,7 +39,6 @@ public class BoardGenerator : MonoBehaviour
     private bool[,] _powerUpBlocksMask;
     private Random _random;
 
-
     private void Awake()
     {
         CaclulateBoardValues();
@@ -47,9 +46,6 @@ public class BoardGenerator : MonoBehaviour
 
     private void CaclulateBoardValues()
     {
-        _simpleBlockPrefabs = _blockPrefabs.Where(e => e.PowerUpType == EPowerUpType.None).ToArray();
-        _powerUpBlockPrefabs = _blockPrefabs.Where(e => e.PowerUpType != EPowerUpType.None).ToArray();
-
         _boardWidth = _blockWidth * _blockColumnCount;
         _boardHeight = _blockHeight * _blockRowCount;
 
@@ -94,8 +90,7 @@ public class BoardGenerator : MonoBehaviour
             {
                 if (_powerUpBlocksMask[i, j])
                 {
-                    var prefab = _powerUpBlockPrefabs[_random.Next(_powerUpBlockPrefabs.Length)];
-                    blockInstances.Add(GenerateBlockInstance(i, j, prefab));
+                    blockInstances.Add(GenerateBlockInstance(i, j, _powerUpBlockPrefab));
                     continue;
                 }
 
@@ -108,7 +103,7 @@ public class BoardGenerator : MonoBehaviour
 
     private void FillPowerUpMask()
     {
-        int powerUpCount = 10 * GetSimpleBlockMaskWeight() / (_blockRowCount * _blockColumnCount);
+        int powerUpCount = 5 * GetSimpleBlockMaskWeight() / (_blockRowCount * _blockColumnCount);
         bool even = powerUpCount % 2 == 0;
         int powerUpEvenCount = even ? powerUpCount : powerUpCount - 1;
 
@@ -122,7 +117,7 @@ public class BoardGenerator : MonoBehaviour
     private void ApplyTwoPowerUpBlocks()
     {
         var x = _random.Next(_blockColumnCount / 2);
-        var y = _random.Next(_blockRowCount);
+        var y = _random.Next(_blockRowCount / 2);
 
         _powerUpBlocksMask[x, y] = true;
         _powerUpBlocksMask[_blockColumnCount - 1 - x, y] = true;
@@ -130,7 +125,7 @@ public class BoardGenerator : MonoBehaviour
 
     private void ApplyOnePowerUpBlock()
     {
-        var y = _random.Next(_blockRowCount);
+        var y = _random.Next(_blockRowCount / 2);
         _powerUpBlocksMask[_blockColumnCount / 2, y] = true;
     }
 
@@ -147,9 +142,8 @@ public class BoardGenerator : MonoBehaviour
             new Vector2(x * _blockWidth, -y * _blockHeight);
         blockPosition = _mainCamera.ScreenToWorldPoint(blockPosition).WithZ(0f);
 
-
         Block block = Instantiate<Block>(prefab, _blocksParent);
-        block.Init(blockPosition, _blockWorldSize, $"block_{x}-{y}");
+        block.Init(blockPosition, _blockWorldSize, new Indexes2D(x, y));
         return block;
     }
 
@@ -179,7 +173,6 @@ public class BoardGenerator : MonoBehaviour
                 throw new Exception("invalid pattern");
         }
     }
-
 
     private void DestroyAllBlocks()
     {
@@ -246,6 +239,7 @@ public class BoardGenerator : MonoBehaviour
     private static int Sqr(int x) => (int)Math.Pow(x, 2);
 
 #if UNITY_EDITOR
+
     private void OnDrawGizmos()
     {
         CaclulateBoardValues();
@@ -272,7 +266,6 @@ public class BoardGenerator : MonoBehaviour
     {
         CaclulateBoardValues();
     }
+
 #endif
 }
-
-

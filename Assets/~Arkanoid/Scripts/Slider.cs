@@ -30,6 +30,7 @@ public class Slider : MonoBehaviour
         _mainCamera = Camera.main;
         _spriteRenderer = GetComponent<SpriteRenderer>();
         _initialWidth = Width;
+        CalculateSliderLimits();
     }
 
     private void CalculateSliderLimits()

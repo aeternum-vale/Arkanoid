@@ -2,30 +2,33 @@ using NaughtyAttributes;
 using System;
 using UnityEngine;
 
-
 public class Block : MonoBehaviour
 {
     [SerializeField] private SpriteRenderer _spriteRenderer;
     [SerializeField] private BoxCollider2D _boxCollider2D;
-    [SerializeField] private EPowerUpType _powerUpType = EPowerUpType.None;
+    [SerializeField] private bool _isPowerUp;
     [SerializeField] private int _hitPointsMaxNumber;
     [SerializeField] [ReadOnly] private int _hitPointsNumber;
 
     public bool IsAlive { get; private set; } = true;
-    public EPowerUpType PowerUpType => _powerUpType;
+    public bool IsPowerUp => _isPowerUp;
+    public int HitPointsMaxNumber => _hitPointsMaxNumber;
+    public Indexes2D GridIndexes { get; private set; }
 
     private void Awake()
     {
         _hitPointsNumber = _hitPointsMaxNumber;
     }
 
-    public void Init(Vector3 position, Vector2 size, string name = "block")
+    public void Init(Vector3 position, Vector2 size, Indexes2D gridIndexes)
     {
+        GridIndexes = gridIndexes;
+
         transform.position = position;
         _spriteRenderer.size = size;
         _boxCollider2D.size = size;
         _boxCollider2D.offset = new Vector2(size.x / 2f, -size.y / 2f);
-        gameObject.name = name;
+        gameObject.name = $"block_{gridIndexes.X}-{gridIndexes.Y}";
     }
 
     public void PlayHitAnimation()

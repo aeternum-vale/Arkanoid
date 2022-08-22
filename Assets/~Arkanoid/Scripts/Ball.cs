@@ -86,7 +86,7 @@ public class Ball : MonoBehaviour
             _collisionNormal = normal;
     }
 
-    private void Update()
+    private void FixedUpdate()
     {
         bool isBlock = false;
         if (!_hasCollisionWithSlider && _hasCollision)
