@@ -28,15 +28,12 @@ public class GameController : MonoBehaviour
     private CancellationTokenSource _powerUpCTS;
 
     [Space]
-    [SerializeField] private Slider _slider;
     [SerializeField] private BoardController _boardController;
+    [SerializeField] private UIController _uiController;
+    [SerializeField] private Slider _slider;
     [SerializeField] private Ball _ball;
 
-    [Header("UI")]
-    [SerializeField] private TMP_Text _levelText;
-    [SerializeField] private TMP_Text _livesText;
-    [SerializeField] private TMP_Text _scoreText;
-    [SerializeField] private TMP_Text _highscoreText;
+    private SessionSaver _sessionSaver = new SessionSaver();
 
     private void Awake()
     {
@@ -48,18 +45,28 @@ public class GameController : MonoBehaviour
     private void AddListeners()
     {
         _ball.BottomHit += OnBottomHit;
+
         _boardController.AllBlocksDemolished += OnAllBlocksDemolished;
         _boardController.BallHitPowerUp += OnBallHitPowerUp;
         _boardController.BallDemolishedBlock += OnBallDemolishedBlock;
-    }
 
+        _uiController.PauseMenuBackButtonClick += OnPauseMenuBackButtonClick;
+        _uiController.PauseMenuSaveButtonClick += OnPauseMenuSaveButtonClick;
+        _uiController.PauseMenuQuitButtonClick += OnPauseMenuQuitButtonClick;
+    }
 
     private void RemoveListeners()
     {
         _ball.BottomHit -= OnBottomHit;
+
         _boardController.AllBlocksDemolished -= OnAllBlocksDemolished;
         _boardController.BallHitPowerUp -= OnBallHitPowerUp;
         _boardController.BallDemolishedBlock -= OnBallDemolishedBlock;
+
+        _uiController.PauseMenuBackButtonClick -= OnPauseMenuBackButtonClick;
+        _uiController.PauseMenuSaveButtonClick -= OnPauseMenuSaveButtonClick;
+        _uiController.PauseMenuQuitButtonClick -= OnPauseMenuQuitButtonClick;
+
     }
 
     private void Start()
@@ -67,10 +74,21 @@ public class GameController : MonoBehaviour
         _level = 1;
         PrepareBoardAndStartLevel();
     }
+
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            PauseGame();
+            _uiController.ShowPauseMenu();
+        }
+    }
+
+
     private void OnBallDemolishedBlock(Block block)
     {
         _score += block.HitPointsMaxNumber;
-        UpdateLevelUI();
+        UpdateLevelStatsUI();
     }
 
     private async void OnBallHitPowerUp()
@@ -112,7 +130,7 @@ public class GameController : MonoBehaviour
 
     private void PrepareBoardAndStartLevel()
     {
-        UpdateLevelUI();
+        UpdateLevelStatsUI();
         _boardController.PrepareNewBoard(_level);
         _ball.IsMoving = true;
     }
@@ -121,6 +139,8 @@ public class GameController : MonoBehaviour
     private void OnBottomHit()
     {
         _lives--;
+        UpdateLevelStatsUI();
+
         if (_lives <= 0)
             FinishGame();
     }
@@ -129,6 +149,34 @@ public class GameController : MonoBehaviour
     private void OnAllBlocksDemolished()
     {
         MoveToNextLevel();
+    }
+
+    private void OnPauseMenuQuitButtonClick()
+    {
+        throw new NotImplementedException();
+    }
+
+    private void OnPauseMenuSaveButtonClick()
+    {
+        SessionData sd = new SessionData()
+        {
+            Level = _level,
+            DemolishedBlockGridIndexes = _boardController.DemolishedBlockGridIndexes,
+            Score = _score,
+            BallPosition = new SimpleVector2D(_ball.transform.position.x, _ball.transform.position.y),
+            BallDirection = new SimpleVector2D(_ball.Direction.x, _ball.Direction.y),
+            SliderXPosition = _slider.transform.position.x
+        };
+
+        _sessionSaver.SaveSessionData(sd);
+
+        _uiController.ShowSessionSavedMessage();
+    }
+
+    private void OnPauseMenuBackButtonClick()
+    {
+        _uiController.HidePauseMenu();
+        ResumeGame();
     }
 
 
@@ -156,13 +204,22 @@ public class GameController : MonoBehaviour
         _slider.RestoreInititalState();
     }
 
-    private void UpdateLevelUI()
+    private void UpdateLevelStatsUI()
     {
-        _levelText.text = $"Level: {_level}";
-        _livesText.text = $"Lives: {_lives}";
-        _scoreText.text = $"Score: {_score}";
-        _highscoreText.text = $"Highscore: {_highscore}";
+        _uiController.Level = _level;
+        _uiController.Lives = _lives;
+        _uiController.Score = _score;
+        _uiController.Highscore = _highscore;
+    }
 
+    private void PauseGame()
+    {
+        Time.timeScale = 0;
+    }
+
+    private void ResumeGame()
+    {
+        Time.timeScale = 1;
     }
 
     private void OnDestroy() => RemoveListeners();

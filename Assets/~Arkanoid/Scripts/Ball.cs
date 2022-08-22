@@ -20,10 +20,10 @@ public class Ball : MonoBehaviour
     public bool IsMoving = false;
     public bool IsAlmighty = false;
 
-
     private Vector3 _inititalPosition;
     private Vector3 _initialDirection;
 
+    public Vector3 Direction  => _direction;
 
     private void Awake()
     {

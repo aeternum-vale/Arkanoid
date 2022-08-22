@@ -17,6 +17,8 @@ public class BoardController : MonoBehaviour
 
     [SerializeField] private Ball _ball;
 
+    public List<Indexes2D> DemolishedBlockGridIndexes => _demolishedBlockGridIndexes;
+
     private void Awake()
     {
         AddListeners();
@@ -54,7 +56,7 @@ public class BoardController : MonoBehaviour
             {
                 AllBlocksDemolished?.Invoke();
                 return;
-            }    
+            }
 
             if (block.IsPowerUp)
                 BallHitPowerUp?.Invoke();

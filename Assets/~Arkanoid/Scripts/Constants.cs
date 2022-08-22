@@ -22,12 +22,24 @@ public struct Indexes2D
     }
 }
 
+public struct SimpleVector2D
+{
+    public float X;
+    public float Y;
+
+    public SimpleVector2D(float x, float y)
+    {
+        X = x;
+        Y = y;
+    }
+}
+
 public struct SessionData
 {
     public int Level;
     public List<Indexes2D> DemolishedBlockGridIndexes;
     public int Score;
-    public Vector2 _ballPosition;
-    public Vector2 _ballDirection;
-    public float _sliderXPosition;
+    public SimpleVector2D BallPosition;
+    public SimpleVector2D BallDirection;
+    public float SliderXPosition;
 }
