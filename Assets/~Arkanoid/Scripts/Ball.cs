@@ -17,7 +17,7 @@ public class Ball : MonoBehaviour
     private bool _hasCollision = false;
     private bool _hasCollisionWithSlider = false;
 
-    public bool IsMoving = false;
+    public bool IsMoving = true;
     public bool IsAlmighty = false;
 
     private Vector3 _inititalPosition;
@@ -41,7 +41,6 @@ public class Ball : MonoBehaviour
         _hasCollisionWithSlider = false;
         _lastCollision = null;
 
-        IsMoving = false;
         IsAlmighty = false;
     }
 

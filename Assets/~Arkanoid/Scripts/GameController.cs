@@ -74,20 +74,28 @@ public class GameController : MonoBehaviour
     {
         if (PlayerPrefs.GetInt(Constants.ContinueModeKey) == 1)
         {
-            RestoreSessionDataAndStartLevel();
-            return;
+            RestoreSession();
+        }
+        else
+        {
+            _level = 1;
+            UpdateLevelStatsUI();
+            PrepareBoard();
         }
 
-        _level = 1;
-        PrepareBoardAndStartLevel();
+        PauseBeforeButtonClick();
     }
 
     private void Update()
     {
         if (Input.GetKeyDown(KeyCode.Escape))
         {
-            PauseGame();
-            _uiController.ShowPauseMenu();
+            if (!_uiController.IsPressButtonToStartMessageShown &&
+                !_uiController.IsGameOverMessageShown)
+            {
+                PauseGame();
+                _uiController.ShowPauseMenu();
+            }
         }
     }
 
@@ -135,11 +143,9 @@ public class GameController : MonoBehaviour
         }
     }
 
-    private void PrepareBoardAndStartLevel()
+    private void PrepareBoard()
     {
-        UpdateLevelStatsUI();
         _boardController.PrepareNewBoard(_level);
-        _ball.IsMoving = true;
     }
 
 
@@ -187,7 +193,7 @@ public class GameController : MonoBehaviour
     }
 
     [Button]
-    private void RestoreSessionDataAndStartLevel()
+    private void RestoreSession()
     {
         if (_sessionSaver.TryRestoreSessionData(out SessionData sessionData))
         {
@@ -205,8 +211,6 @@ public class GameController : MonoBehaviour
             _level = sessionData.Level;
 
             UpdateLevelStatsUI();
-
-            _ball.IsMoving = true;
         }
     }
 
@@ -240,16 +244,14 @@ public class GameController : MonoBehaviour
         _level++;
 
         RestoreInititalState();
-        PrepareBoardAndStartLevel();
+        PrepareBoard();
+        PauseBeforeButtonClick();
     }
 
     private void RestoreInititalState()
     {
         _powerUpCTS?.Cancel();
-
-        _ball.IsMoving = false;
         _ball.RestoreInititalState();
-
         _slider.RestoreInititalState();
     }
 
@@ -259,6 +261,16 @@ public class GameController : MonoBehaviour
         _uiController.Lives = _lives;
         _uiController.Score = _score;
         _uiController.Highscore = _highscore;
+    }
+
+    private async void PauseBeforeButtonClick()
+    {
+        PauseGame();
+        _uiController.IsPressButtonToStartMessageShown = true;
+
+        await UniTask.WaitUntil(() => Input.GetKeyDown(KeyCode.Space));
+        _uiController.IsPressButtonToStartMessageShown = false;
+        ResumeGame();
     }
 
     private void PauseGame()

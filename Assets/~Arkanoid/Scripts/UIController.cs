@@ -31,7 +31,16 @@ public class UIController : MonoBehaviour
     public int Score { set => _scoreText.text = $"Score: {value}"; }
     public int Highscore { set => _highscoreText.text = $"Highscore: {value}"; }
 
-    public bool PressButtonToStartMessage { set => _pressButtonToStartMessage.SetActive(value); }
+    public bool IsPressButtonToStartMessageShown
+    {
+        get => _pressButtonToStartMessage.activeSelf;
+        set => _pressButtonToStartMessage.SetActive(value);
+    }
+
+    public bool IsGameOverMessageShown
+    {
+        get => _gameOverMessage.activeSelf;
+    }
 
     private void Awake()
     {

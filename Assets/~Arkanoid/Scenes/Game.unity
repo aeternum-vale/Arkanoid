@@ -8407,7 +8407,7 @@ MonoBehaviour:
   _speed: 0.05
   _sliderRedirectionAngle: 90
   _lastCollision: {fileID: 0}
-  IsMoving: 0
+  IsMoving: 1
   IsAlmighty: 0
 --- !u!50 &1156793644
 Rigidbody2D:
