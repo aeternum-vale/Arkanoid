@@ -179,8 +179,8 @@ public class BoardGenerator : MonoBehaviour
 
     private void DestroyAllBlocks()
     {
-        while (_blocksParent.childCount > 0)
-            DestroyImmediate(_blocksParent.GetChild(0).gameObject);
+        foreach (Transform child in _blocksParent)
+            Destroy(child.gameObject);
     }
 
     private void ApplyRandomFigureToSimpleMask()

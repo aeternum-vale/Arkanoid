@@ -35,15 +35,12 @@ public class GameController : MonoBehaviour
 
     private SessionSaver _sessionSaver = new SessionSaver();
 
-    private CancellationTokenSource _lifetimeCTS;
-
 
     private void Awake()
     {
         AddListeners();
         _mainCamera = Camera.main;
         _highscore = PlayerPrefs.GetInt(HighscoreKey, 0);
-        _lifetimeCTS = new CancellationTokenSource();
     }
 
     private void AddListeners()
@@ -70,7 +67,6 @@ public class GameController : MonoBehaviour
         _uiController.PauseMenuBackButtonClick -= OnPauseMenuBackButtonClick;
         _uiController.PauseMenuSaveButtonClick -= OnPauseMenuSaveButtonClick;
         _uiController.PauseMenuQuitButtonClick -= OnPauseMenuQuitButtonClick;
-
     }
 
     private void Start()
@@ -237,7 +233,7 @@ public class GameController : MonoBehaviour
 
         _uiController.ShowGameOverMessage(_score, _highscore);
 
-        await UniTask.WaitUntil(() => Input.anyKey, cancellationToken: _lifetimeCTS.Token);
+        await UniTask.WaitUntil(() => Input.anyKey);
 
         GoToMenuScene();
     }
@@ -272,7 +268,7 @@ public class GameController : MonoBehaviour
         PauseGame();
         _uiController.IsPressButtonToStartMessageShown = true;
 
-        await UniTask.WaitUntil(() => Input.GetKeyDown(KeyCode.Space), cancellationToken: _lifetimeCTS.Token);
+        await UniTask.WaitUntil(() => Input.GetKeyDown(KeyCode.Space));
         _uiController.IsPressButtonToStartMessageShown = false;
         ResumeGame();
     }
@@ -290,7 +286,6 @@ public class GameController : MonoBehaviour
     private void OnDestroy()
     {
         RemoveListeners();
-        _lifetimeCTS?.Cancel();
         _powerUpCTS?.Cancel();
     }
 }
