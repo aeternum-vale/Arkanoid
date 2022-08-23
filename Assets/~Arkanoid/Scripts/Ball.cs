@@ -7,26 +7,56 @@ public class Ball : MonoBehaviour
     public event Action<(GameObject, Vector2)> BlockHit;
     public event Action BottomHit;
 
-
-    [SerializeField] private SpriteRenderer _spriteRenderer;
-    [SerializeField] private Camera _mainCamera;
-    [Space]
     [SerializeField] private Transform _initialPosition;
     [SerializeField] private Vector3 _direction = new Vector3(1f, 1f, 0f);
     [SerializeField] private float _speed = 1f;
     [SerializeField] private float _sliderRedirectionAngle = 80f;
     [SerializeField] private float _offsetOnHit = 0.01f;
+
+    [Space]
+    [SerializeField] private Camera _mainCamera;
+    [SerializeField] private ParticleSystem _almightyParticleSystem;
+    [SerializeField] private SpriteRenderer _spriteRenderer;
+    [SerializeField] private TrailRenderer _trailRenderer;
+
     [Space]
     [ReadOnly] [SerializeField] private GameObject _lastCollision1;
     [ReadOnly] [SerializeField] private GameObject _lastCollision2;
 
-    public bool IsMoving = false;
-    public bool IsAlmighty = false;
-    public Vector3 Direction { get => _direction; set => _direction = value; }
+    [Space]
+    [SerializeField] private Color _normal;
+    [SerializeField] private Color _trailNormal;
+    [SerializeField] private Color _almighty;
 
+    private bool _isMoving = false;
+    private bool _isAlmighty = false;
     private ContactFilter2D _contactFilter2D;
-
     private float _radius;
+
+    public Vector3 Direction { get => _direction; set => _direction = value; }
+    public bool IsAlmighty
+    {
+        get => _isAlmighty;
+        set
+        {
+            if (value)
+            {
+                _almightyParticleSystem.gameObject.SetActive(true);
+                _almightyParticleSystem.Play();
+                _spriteRenderer.color = _almighty;
+                _trailRenderer.startColor = _almighty;
+            } else
+            {
+                _almightyParticleSystem.Stop();
+                _spriteRenderer.color = _normal;
+                _trailRenderer.startColor = _trailNormal;
+            }
+
+            _isAlmighty = value;
+        }
+    }
+    public bool IsMoving { get => _isMoving; set => _isMoving = value; }
+
 
     private void Awake()
     {
@@ -52,6 +82,11 @@ public class Ball : MonoBehaviour
         _lastCollision2 = null;
 
         IsAlmighty = false;
+
+        _almightyParticleSystem.Clear();
+        _almightyParticleSystem.Stop();
+
+        _trailRenderer.Clear();
     }
 
     private void ChangeDirectionAccordingToSlider(RaycastHit2D hit)
@@ -264,4 +299,5 @@ public class Ball : MonoBehaviour
     {
         return GetVectorDirectness(a) > GetVectorDirectness(b) ? a : b;
     }
+
 }
