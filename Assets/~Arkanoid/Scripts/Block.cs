@@ -1,6 +1,9 @@
+using DG.Tweening;
+using Gamelogic.Extensions;
 using NaughtyAttributes;
 using System;
 using UnityEngine;
+using ReadOnly = NaughtyAttributes.ReadOnlyAttribute;
 
 public class Block : MonoBehaviour
 {
@@ -9,11 +12,19 @@ public class Block : MonoBehaviour
     [SerializeField] private bool _isPowerUp;
     [SerializeField] private int _hitPointsMaxNumber;
     [SerializeField] [ReadOnly] private int _hitPointsNumber;
+    [SerializeField] private float _hitPunchForce;
+    [SerializeField] private float _animationDuration = 1f;
+
+    private Tween _punchTween;
+    private Sequence _demolishSeq;
+    private Vector3 _initPosition;
 
     public bool IsAlive { get; private set; } = true;
     public bool IsPowerUp => _isPowerUp;
     public int HitPointsMaxNumber => _hitPointsMaxNumber;
     public Indexes2D GridIndexes { get; private set; }
+
+
 
     private void Awake()
     {
@@ -24,6 +35,7 @@ public class Block : MonoBehaviour
     {
         GridIndexes = gridIndexes;
 
+        _initPosition = position;
         transform.position = position;
         _spriteRenderer.size = size;
         _boxCollider2D.size = size;
@@ -31,27 +43,34 @@ public class Block : MonoBehaviour
         gameObject.name = $"block_{gridIndexes.X}-{gridIndexes.Y}";
     }
 
-    public void PlayHitAnimation()
+    public void PlayHitAnimation(Vector2 ballDirection)
     {
-
+        _punchTween?.Kill();
+        transform.position = _initPosition;
+        _punchTween = transform.DOPunchPosition(ballDirection * _hitPunchForce, _animationDuration, 4);
     }
 
-    public void PlayDemolishAnimation(Action OnComplete = null)
+    public void PlayDemolishAnimation(Vector2 ballDirection, Action OnComplete = null)
     {
-        OnComplete?.Invoke();
+        _demolishSeq?.Kill();
+
+        _demolishSeq = DOTween.Sequence();
+        _demolishSeq.Append(transform.DOMove(transform.position + (Vector3)ballDirection, _animationDuration));
+        _demolishSeq.Join(_spriteRenderer.DOFade(0, _animationDuration));
+        _demolishSeq.onComplete = () => OnComplete?.Invoke();
     }
 
-    public void OnHitByBall(bool isAlmighty)
+    public void OnHitByBall(Vector2 ballDirection, bool isAlmighty)
     {
         _hitPointsNumber--;
         if (_hitPointsNumber <= 0 || isAlmighty)
         {
             IsAlive = false;
             _boxCollider2D.enabled = false;
-            PlayDemolishAnimation(() => gameObject.SetActive(false));
+            PlayDemolishAnimation(ballDirection, () => gameObject.SetActive(false));
         }
         else
-            PlayHitAnimation();
+            PlayHitAnimation(ballDirection);
     }
 
 }

@@ -48,11 +48,14 @@ public class BoardController : MonoBehaviour
         _ball.BlockHit -= OnBallHitBlock;
     }
 
-    private void OnBallHitBlock(GameObject blockGameObject)
+    private void OnBallHitBlock((GameObject, Vector2) args)
     {
+        GameObject blockGameObject = args.Item1;
+        Vector2 initialDirection = args.Item2;
+
         Block block = _blocksGODictionary[blockGameObject];
 
-        block.OnHitByBall(_ball.IsAlmighty);
+        block.OnHitByBall(initialDirection, _ball.IsAlmighty);
 
         if (!block.IsAlive)
         {

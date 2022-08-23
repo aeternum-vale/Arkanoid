@@ -72,7 +72,7 @@ public class BoardGenerator : MonoBehaviour
 
         DestroyAllBlocks();
 
-        _random = new Random(seed);
+        _random = new Random(seed + _seed);
         _simpleBlocksMask = new bool[_blockColumnCount, _blockRowCount];
         _powerUpBlocksMask = new bool[_blockColumnCount, _blockRowCount];
 
@@ -179,8 +179,16 @@ public class BoardGenerator : MonoBehaviour
 
     private void DestroyAllBlocks()
     {
-        foreach (Transform child in _blocksParent)
-            Destroy(child.gameObject);
+        if (Application.isPlaying)
+        {
+            foreach (Transform child in _blocksParent)
+                Destroy(child.gameObject);
+        }
+        else
+        {
+            while (_blocksParent.childCount > 0)
+                DestroyImmediate(_blocksParent.GetChild(0).gameObject);
+        }
     }
 
     private void ApplyRandomFigureToSimpleMask()
@@ -247,7 +255,7 @@ public class BoardGenerator : MonoBehaviour
     {
         CaclulateBoardValues();
 
-        float gridZ = 1f;
+        float gridZ = 3f;
 
         Gizmos.color = Color.red;
         for (int i = 0; i <= _blockColumnCount; i++)

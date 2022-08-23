@@ -74,8 +74,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _spriteRenderer: {fileID: 7378417821425488556}
   _boxCollider2D: {fileID: 769889423005696392}
+  _isPowerUp: 0
   _hitPointsMaxNumber: 1
   _hitPointsNumber: 0
+  _hitPunchForce: 0.1
 --- !u!1 &4191755005779088088
 GameObject:
   m_ObjectHideFlags: 0

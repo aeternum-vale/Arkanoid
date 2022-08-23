@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class Ball : MonoBehaviour
 {
-    public event Action<GameObject> BlockHit;
+    public event Action<(GameObject, Vector2)> BlockHit;
     public event Action BottomHit;
 
 
@@ -196,15 +196,15 @@ public class Ball : MonoBehaviour
             if (IsAlmighty)
             {
                 if (IsBlockHit(hit1))
-                    BlockHit?.Invoke(hit1.collider.gameObject);
+                    BlockHit?.Invoke((hit1.collider.gameObject, initialDirection));
                 if (IsBlockHit(hit2))
-                    BlockHit?.Invoke(hit2.collider.gameObject);
+                    BlockHit?.Invoke((hit2.collider.gameObject, initialDirection));
 
                 _direction = initialDirection;
                 _nextPosition = transform.position + _direction * distance;
             }
             else
-                BlockHit?.Invoke(hit.collider.gameObject);
+                BlockHit?.Invoke((hit.collider.gameObject, initialDirection));
         }
     }
 
