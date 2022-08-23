@@ -6,6 +6,7 @@ public static class Constants
     public const int SliderLayer = 6;
     public const int BlocksLayer = 7;
     public const int BottomLayer = 8;
+    public const int WallsLayer = 9;
 
     public const string ContinueModeKey = "ContinueModeKey";
 

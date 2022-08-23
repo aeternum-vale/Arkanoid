@@ -38,6 +38,8 @@ public class GameController : MonoBehaviour
 
     private void Awake()
     {
+        Application.targetFrameRate = 60;
+
         AddListeners();
         _mainCamera = Camera.main;
         _highscore = PlayerPrefs.GetInt(HighscoreKey, 0);
