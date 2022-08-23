@@ -80,7 +80,9 @@ public class GameController : MonoBehaviour
         else
         {
             _level = 1;
+            _lives = _maxLivesNumber;
             UpdateLevelStatsUI();
+            RestoreInititalState();
             PrepareBoard();
         }
 
@@ -245,9 +247,10 @@ public class GameController : MonoBehaviour
     {
         _level++;
 
-        RestoreInititalState();
-        PrepareBoard();
+        _ball.IsMoving = false;
         PauseBeforeButtonClick();
+        PrepareBoard();
+        RestoreInititalState();
     }
 
     private void RestoreInititalState()
@@ -272,6 +275,7 @@ public class GameController : MonoBehaviour
 
         await UniTask.WaitUntil(() => Input.GetKeyDown(KeyCode.Space));
         _uiController.IsPressButtonToStartMessageShown = false;
+        _ball.IsMoving = true;
         ResumeGame();
     }
 

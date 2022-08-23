@@ -7,8 +7,11 @@ public class Ball : MonoBehaviour
     public event Action<GameObject> BlockHit;
     public event Action BottomHit;
 
+
     [SerializeField] private SpriteRenderer _spriteRenderer;
+    [SerializeField] private Camera _mainCamera;
     [Space]
+    [SerializeField] private Transform _initialPosition;
     [SerializeField] private Vector3 _direction = new Vector3(1f, 1f, 0f);
     [SerializeField] private float _speed = 1f;
     [SerializeField] private float _sliderRedirectionAngle = 80f;
@@ -17,22 +20,16 @@ public class Ball : MonoBehaviour
     [ReadOnly] [SerializeField] private GameObject _lastCollision1;
     [ReadOnly] [SerializeField] private GameObject _lastCollision2;
 
-    public bool IsMoving = true;
+    public bool IsMoving = false;
     public bool IsAlmighty = false;
     public Vector3 Direction { get => _direction; set => _direction = value; }
 
     private ContactFilter2D _contactFilter2D;
-    private Vector3 _inititalPosition;
-    private Vector3 _initialDirection;
-    private float _radius;
 
-    private const float _deltaTimeCorrection = 1f / 60f;
+    private float _radius;
 
     private void Awake()
     {
-        _inititalPosition = transform.position;
-        _initialDirection = _direction;
-
         _radius = _spriteRenderer.size.x / 2f;
 
         int layerMask = 1 << Constants.BlocksLayer;
@@ -48,8 +45,8 @@ public class Ball : MonoBehaviour
 
     public void RestoreInititalState()
     {
-        transform.position = _inititalPosition;
-        _direction = _initialDirection;
+        transform.position = _initialPosition.position;
+        _direction = _initialPosition.up;
 
         _lastCollision1 = null;
         _lastCollision2 = null;
@@ -83,6 +80,16 @@ public class Ball : MonoBehaviour
         return IsLayerHit(Constants.BottomLayer, hit1, hit2, hitCount, out hit);
     }
 
+    private bool IsBlockHit(RaycastHit2D hit1, RaycastHit2D hit2, int hitCount, out RaycastHit2D hit)
+    {
+        return IsLayerHit(Constants.BlocksLayer, hit1, hit2, hitCount, out hit);
+    }
+
+    private bool IsBlockHit(RaycastHit2D hit)
+    {
+        return hit.collider != null && hit.collider.gameObject.layer.Equals(Constants.BlocksLayer);
+    }
+
     private bool IsLayerHit(int layer, RaycastHit2D hit1, RaycastHit2D hit2, int hitCount, out RaycastHit2D hit)
     {
         hit = new RaycastHit2D();
@@ -109,8 +116,20 @@ public class Ball : MonoBehaviour
     {
         if (Time.timeScale == 0) return;
 
-        float distance = _speed * (Time.deltaTime / _deltaTimeCorrection);
+        var initialDirection = _direction;
+        float distance = _speed * Time.deltaTime;
         Vector3 nextPosition = transform.position + _direction * distance;
+
+        if (IsOutsideOfTheScreen())
+        {
+            _direction = (Vector3.zero - transform.position).normalized;
+            nextPosition = transform.position + _direction * distance;
+            MoveTo(nextPosition);
+
+            Debug.Log("returned!");
+            return;
+        }
+
 
         RaycastHit2D[] raycastResults = new RaycastHit2D[2];
         int hitCount = Physics2D.CircleCast(transform.position, _radius, _direction, _contactFilter2D, raycastResults, distance);
@@ -147,15 +166,14 @@ public class Ball : MonoBehaviour
             if (hitCount == 1)
             {
                 _direction = Vector3.Reflect(_direction, hit1.normal.normalized).normalized;
-                nextPosition = hit1.centroid + (Vector2)_direction * _offsetOnHit;
+                nextPosition = hit1.centroid;
 
                 _lastCollision1 = hit1.collider.gameObject;
                 _lastCollision2 = null;
             }
-
+            else
             if (hitCount == 2)
             {
-
                 if (Vector2.Dot(hit1.normal, hit2.normal) > 0.1f)
                 {
                     _direction = Vector3.Reflect(_direction, GetMoreDirectnessVector(hit1.normal, hit2.normal)).normalized;
@@ -166,25 +184,62 @@ public class Ball : MonoBehaviour
                     _direction = Vector3.Reflect(_direction, avgNormal).normalized;
                 }
 
-                nextPosition = (hit1.centroid + hit2.centroid) / 2f + (Vector2)_direction * _offsetOnHit;
+                nextPosition = (hit1.centroid + hit2.centroid) / 2f;
 
                 _lastCollision1 = hit1.collider.gameObject;
                 _lastCollision2 = hit2.collider.gameObject;
             }
 
-
             if (IsSliderHit(hit1, hit2, hitCount, out RaycastHit2D sliderHit))
                 ChangeDirectionAccordingToSlider(sliderHit);
+
+            nextPosition += _direction * _offsetOnHit;
+
+            if (IsBlockHit(hit1, hit2, hitCount, out RaycastHit2D hit))
+            {
+                if (IsAlmighty)
+                {
+                    if (IsBlockHit(hit1))
+                        BlockHit?.Invoke(hit1.collider.gameObject);
+                    if (IsBlockHit(hit2))
+                        BlockHit?.Invoke(hit2.collider.gameObject);
+
+                    _direction = initialDirection;
+                    nextPosition = transform.position + _direction * distance;
+                }
+                else
+                    BlockHit?.Invoke(hit.collider.gameObject);
+            }
+
+            if (IsBottomHit(hit1, hit2, hitCount, out _))
+                BottomHit?.Invoke();
         }
 
         MoveTo(nextPosition);
     }
+
+    private void HandleAlmightyHits(int hitCount, RaycastHit2D hit1, RaycastHit2D hit2)
+    {
+        if (hitCount > 1)
+        {
+            if (!hit1.collider.gameObject.layer.Equals(Constants.BlocksLayer))
+                BlockHit?.Invoke(hit1.collider.gameObject);
+
+            if (hitCount == 2)
+                if (!hit1.collider.gameObject.layer.Equals(Constants.BlocksLayer))
+                    BlockHit?.Invoke(hit2.collider.gameObject);
+        }
+    }
+
+    private bool IsOutsideOfTheScreen() =>
+        !new Rect(0, 0, 1, 1).Contains(_mainCamera.WorldToViewportPoint(transform.position));
 
 
     private void MoveTo(Vector3 nextPosition)
     {
         if (!IsMoving) return;
 
+        Debug.DrawLine(transform.position, nextPosition, Color.red, 0.3f);
         transform.position = nextPosition;
     }
 

@@ -342,6 +342,37 @@ BoxCollider2D:
   serializedVersion: 2
   m_Size: {x: 0.5749998, y: 0.375}
   m_EdgeRadius: 0
+--- !u!1 &63854956
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 63854957}
+  m_Layer: 10
+  m_Name: BallInitialPosition
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &63854957
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 63854956}
+  m_LocalRotation: {x: -0, y: -0, z: -0.056960057, w: 0.99837655}
+  m_LocalPosition: {x: 0, y: -3.94, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 10
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: -6.531}
 --- !u!1 &68448932
 GameObject:
   m_ObjectHideFlags: 0
@@ -640,7 +671,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 11
+  m_RootOrder: 12
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &143093505
 GameObject:
@@ -4071,7 +4102,7 @@ Transform:
   - {fileID: 18699145}
   - {fileID: 408562727}
   m_Father: {fileID: 0}
-  m_RootOrder: 10
+  m_RootOrder: 11
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &525851643
 GameObject:
@@ -7279,7 +7310,7 @@ MonoBehaviour:
   _level: 0
   _score: 0
   _highscore: 0
-  _maxLivesNumber: 3
+  _maxLivesNumber: 1040
   _lives: 3
   _powerUpIntervalSec: 10
   _boardController: {fileID: 708424325}
@@ -8284,12 +8315,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _spriteRenderer: {fileID: 1952002814}
+  _mainCamera: {fileID: 519420031}
+  _initialPosition: {fileID: 63854957}
   _direction: {x: 0.1, y: 1, z: 0}
-  _speed: 0.1
+  _speed: 8
   _sliderRedirectionAngle: 90
-  _lastCollision: {fileID: 0}
-  _comparisonPrecision: 0.01
-  IsMoving: 1
+  _offsetOnHit: 0.01
+  _lastCollision1: {fileID: 0}
+  _lastCollision2: {fileID: 0}
+  IsMoving: 0
   IsAlmighty: 0
 --- !u!1 &1160171422
 GameObject:
@@ -14825,7 +14859,7 @@ RectTransform:
   - {fileID: 1152023670}
   - {fileID: 1859943678}
   m_Father: {fileID: 0}
-  m_RootOrder: 12
+  m_RootOrder: 13
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
