@@ -112,30 +112,110 @@ public class Ball : MonoBehaviour
         return false;
     }
 
+    Vector3 _nextPosition;
+
     private void Update()
     {
         if (Time.timeScale == 0) return;
 
         var initialDirection = _direction;
         float distance = _speed * Time.deltaTime;
-        Vector3 nextPosition = transform.position + _direction * distance;
+        _nextPosition = transform.position + _direction * distance;
 
         if (IsOutsideOfTheScreen())
         {
-            _direction = (Vector3.zero - transform.position).normalized;
-            nextPosition = transform.position + _direction * distance;
-            MoveTo(nextPosition);
-
-            Debug.Log("returned!");
+            HandleScreenLeaving(distance);
             return;
         }
 
-
         RaycastHit2D[] raycastResults = new RaycastHit2D[2];
         int hitCount = Physics2D.CircleCast(transform.position, _radius, _direction, _contactFilter2D, raycastResults, distance);
-        RaycastHit2D hit1 = raycastResults[0];
-        RaycastHit2D hit2 = raycastResults[1];
 
+        if (hitCount == 0) return;
+
+        var hit1 = raycastResults[0];
+        var hit2 = raycastResults[1];
+
+        RefineHitCounts(ref hitCount, ref hit1, hit2);
+
+        if (hitCount == 0) return;
+
+        EvaluateDirectionAndNextPosition(hitCount, ref hit1, ref hit2);
+
+        if (IsSliderHit(hit1, hit2, hitCount, out RaycastHit2D sliderHit))
+            ChangeDirectionAccordingToSlider(sliderHit);
+
+        _nextPosition += _direction * _offsetOnHit;
+
+        HandleBlockHit(initialDirection, distance, hitCount, ref hit1, ref hit2);
+
+        if (IsBottomHit(hit1, hit2, hitCount, out _))
+            BottomHit?.Invoke();
+    }
+
+    private void HandleScreenLeaving(float distance)
+    {
+        _direction = (Vector3.zero - transform.position).normalized;
+        _nextPosition = transform.position + _direction * distance;
+        MoveTo(_nextPosition);
+        Debug.Log("returned!");
+    }
+
+    private void EvaluateDirectionAndNextPosition(int hitCount, ref RaycastHit2D hit1, ref RaycastHit2D hit2)
+    {
+        if (hitCount == 1)
+        {
+            _direction = Vector3.Reflect(_direction, hit1.normal.normalized).normalized;
+            _nextPosition = hit1.centroid;
+
+            _lastCollision1 = hit1.collider.gameObject;
+            _lastCollision2 = null;
+        }
+        else
+        if (hitCount == 2)
+        {
+            if (Vector2.Dot(hit1.normal, hit2.normal) > 0.1f)
+                _direction = Vector3.Reflect(_direction, GetMoreDirectnessVector(hit1.normal, hit2.normal)).normalized;
+            else
+            {
+                Vector2 avgNormal = (hit1.normal + hit2.normal / 2f).normalized;
+                _direction = Vector3.Reflect(_direction, avgNormal).normalized;
+            }
+
+            _nextPosition = (hit1.centroid + hit2.centroid) / 2f;
+
+            _lastCollision1 = hit1.collider.gameObject;
+            _lastCollision2 = hit2.collider.gameObject;
+        }
+    }
+
+    private void HandleBlockHit(Vector3 initialDirection, float distance, int hitCount, ref RaycastHit2D hit1, ref RaycastHit2D hit2)
+    {
+        if (IsBlockHit(hit1, hit2, hitCount, out RaycastHit2D hit))
+        {
+            if (IsAlmighty)
+            {
+                if (IsBlockHit(hit1))
+                    BlockHit?.Invoke(hit1.collider.gameObject);
+                if (IsBlockHit(hit2))
+                    BlockHit?.Invoke(hit2.collider.gameObject);
+
+                _direction = initialDirection;
+                _nextPosition = transform.position + _direction * distance;
+            }
+            else
+                BlockHit?.Invoke(hit.collider.gameObject);
+        }
+    }
+
+    private void LateUpdate()
+    {
+        MoveTo(_nextPosition);
+    }
+
+
+    private void RefineHitCounts(ref int hitCount, ref RaycastHit2D hit1, RaycastHit2D hit2)
+    {
         if (hitCount == 1)
         {
             if (!IsOriginalCollider(hit1))
@@ -158,76 +238,6 @@ public class Ball : MonoBehaviour
                 hitCount = 1;
                 hit1 = hit2;
             }
-        }
-
-        if (hitCount > 0)
-        {
-
-            if (hitCount == 1)
-            {
-                _direction = Vector3.Reflect(_direction, hit1.normal.normalized).normalized;
-                nextPosition = hit1.centroid;
-
-                _lastCollision1 = hit1.collider.gameObject;
-                _lastCollision2 = null;
-            }
-            else
-            if (hitCount == 2)
-            {
-                if (Vector2.Dot(hit1.normal, hit2.normal) > 0.1f)
-                {
-                    _direction = Vector3.Reflect(_direction, GetMoreDirectnessVector(hit1.normal, hit2.normal)).normalized;
-                }
-                else
-                {
-                    Vector2 avgNormal = (hit1.normal + hit2.normal / 2f).normalized;
-                    _direction = Vector3.Reflect(_direction, avgNormal).normalized;
-                }
-
-                nextPosition = (hit1.centroid + hit2.centroid) / 2f;
-
-                _lastCollision1 = hit1.collider.gameObject;
-                _lastCollision2 = hit2.collider.gameObject;
-            }
-
-            if (IsSliderHit(hit1, hit2, hitCount, out RaycastHit2D sliderHit))
-                ChangeDirectionAccordingToSlider(sliderHit);
-
-            nextPosition += _direction * _offsetOnHit;
-
-            if (IsBlockHit(hit1, hit2, hitCount, out RaycastHit2D hit))
-            {
-                if (IsAlmighty)
-                {
-                    if (IsBlockHit(hit1))
-                        BlockHit?.Invoke(hit1.collider.gameObject);
-                    if (IsBlockHit(hit2))
-                        BlockHit?.Invoke(hit2.collider.gameObject);
-
-                    _direction = initialDirection;
-                    nextPosition = transform.position + _direction * distance;
-                }
-                else
-                    BlockHit?.Invoke(hit.collider.gameObject);
-            }
-
-            if (IsBottomHit(hit1, hit2, hitCount, out _))
-                BottomHit?.Invoke();
-        }
-
-        MoveTo(nextPosition);
-    }
-
-    private void HandleAlmightyHits(int hitCount, RaycastHit2D hit1, RaycastHit2D hit2)
-    {
-        if (hitCount > 1)
-        {
-            if (!hit1.collider.gameObject.layer.Equals(Constants.BlocksLayer))
-                BlockHit?.Invoke(hit1.collider.gameObject);
-
-            if (hitCount == 2)
-                if (!hit1.collider.gameObject.layer.Equals(Constants.BlocksLayer))
-                    BlockHit?.Invoke(hit2.collider.gameObject);
         }
     }
 
