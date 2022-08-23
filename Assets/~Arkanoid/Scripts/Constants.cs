@@ -15,7 +15,7 @@ public static class Constants
 
 }
 
-public enum EPowerUpType { None = 0, AlmightyBall, WiderSlider }
+public enum EPowerUpType { None = 0, AlmightyBall, WiderSlider, Boost }
 
 public struct Indexes2D
 {

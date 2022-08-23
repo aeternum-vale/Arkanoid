@@ -5620,7 +5620,7 @@ MonoBehaviour:
   _highscore: 0
   _maxLivesNumber: 1040
   _lives: 3
-  _powerUpIntervalSec: 10
+  _avgPowerUpIntervalSec: 5
   _boardController: {fileID: 708424325}
   _uiController: {fileID: 689315570}
   _slider: {fileID: 421886022}
@@ -11931,7 +11931,7 @@ ParticleSystemRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 10308, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 2100000, guid: e90cd233eaf15fe478d76cb67c27f445, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -16794,7 +16794,7 @@ Transform:
   m_GameObject: {fileID: 1952002812}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 1, y: 1, z: 1.5}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1156793642}
@@ -16840,7 +16840,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 1
   m_Sprite: {fileID: -2413806693520163455, guid: a86470a33a6bf42c4b3595704624658b, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0

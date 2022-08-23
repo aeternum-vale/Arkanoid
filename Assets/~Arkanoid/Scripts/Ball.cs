@@ -43,12 +43,12 @@ public class Ball : MonoBehaviour
             {
                 _almightyParticleSystem.gameObject.SetActive(true);
                 _almightyParticleSystem.Play();
-                _spriteRenderer.color = _almighty;
+                //_spriteRenderer.color = _almighty;
                 _trailRenderer.startColor = _almighty;
             } else
             {
                 _almightyParticleSystem.Stop();
-                _spriteRenderer.color = _normal;
+                //_spriteRenderer.color = _normal;
                 _trailRenderer.startColor = _trailNormal;
             }
 
@@ -56,7 +56,7 @@ public class Ball : MonoBehaviour
         }
     }
     public bool IsMoving { get => _isMoving; set => _isMoving = value; }
-
+    public float Speed { get => _speed; set => _speed = value; }
 
     private void Awake()
     {

@@ -24,7 +24,7 @@ public class GameController : MonoBehaviour
     [SerializeField] [ReadOnly] private int _lives = 3;
 
     [Space]
-    [SerializeField] private float _powerUpIntervalSec = 5f;
+    [SerializeField] private float _avgPowerUpIntervalSec = 5f;
     private CancellationTokenSource _powerUpCTS;
 
     [Space]
@@ -35,6 +35,9 @@ public class GameController : MonoBehaviour
 
     private SessionSaver _sessionSaver = new SessionSaver();
 
+    private float _sliderInitialWidth;
+    private float _ballInitialSpeed;
+
 
     private void Awake()
     {
@@ -43,6 +46,9 @@ public class GameController : MonoBehaviour
         AddListeners();
         _mainCamera = Camera.main;
         _highscore = PlayerPrefs.GetInt(HighscoreKey, 0);
+
+        _sliderInitialWidth = _slider.Width;
+        _ballInitialSpeed = _ball.Speed;
     }
 
     private void AddListeners()
@@ -115,6 +121,7 @@ public class GameController : MonoBehaviour
         EPowerUpType powerUpType = (EPowerUpType)values.GetValue(Random.Range(1, values.Length));
 
         Debug.Log($"powerUpType={powerUpType}");
+        float intervalSec = _avgPowerUpIntervalSec;
 
         switch (powerUpType)
         {
@@ -123,14 +130,19 @@ public class GameController : MonoBehaviour
                 break;
             case EPowerUpType.WiderSlider:
                 _slider.Width *= 1.5f;
+                intervalSec *= 2;
                 break;
-
+            case EPowerUpType.Boost:
+                _slider.Width = _mainCamera.orthographicSize * 2f * _mainCamera.aspect;
+                _ball.Speed *= 10;
+                intervalSec /= 2;
+                break;
             default:
                 throw new Exception("invalid power-up type");
         }
 
         _powerUpCTS = new CancellationTokenSource();
-        await UniTask.Delay(TimeSpan.FromSeconds(_powerUpIntervalSec), cancellationToken: _powerUpCTS.Token);
+        await UniTask.Delay(TimeSpan.FromSeconds(intervalSec), cancellationToken: _powerUpCTS.Token);
 
         switch (powerUpType)
         {
@@ -138,9 +150,12 @@ public class GameController : MonoBehaviour
                 _ball.IsAlmighty = false;
                 break;
             case EPowerUpType.WiderSlider:
-                _slider.Width /= 1.5f;
+                _slider.Width /= _sliderInitialWidth;
                 break;
-
+            case EPowerUpType.Boost:
+                _ball.Speed /= 10;
+                _slider.Width = _sliderInitialWidth;
+                break;
             default:
                 throw new Exception("invalid power-up type");
         }
@@ -258,6 +273,9 @@ public class GameController : MonoBehaviour
         _powerUpCTS?.Cancel();
         _ball.RestoreInititalState();
         _slider.RestoreInititalState();
+
+        _ball.Speed = _ballInitialSpeed;
+        _slider.Width = _sliderInitialWidth;
     }
 
     private void UpdateLevelStatsUI()
