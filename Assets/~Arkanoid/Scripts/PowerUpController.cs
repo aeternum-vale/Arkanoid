@@ -70,9 +70,10 @@ public class PowerUpController : MonoBehaviour
                 break;
             case EPowerUpType.Boost:
                 _ball.IsBoosted = true;
-                Animate(() => _slider.Width, v => _slider.Width = v, _slider.BoostedWidth);
-                Animate(() => _ball.Speed, v => _ball.Speed = v, _ball.InitialSpeed * 5f);
-                intervalSec /= 2f;
+                Animate(
+                    () => _slider.Width, v => _slider.Width = v, _slider.BoostedWidth,
+                        () => Animate(() => _ball.Speed, v => _ball.Speed = v, _ball.InitialSpeed * 5f));
+                intervalSec /= 1.5f;
                 break;
             default:
                 throw new Exception("invalid power-up type");
@@ -95,7 +96,7 @@ public class PowerUpController : MonoBehaviour
             case EPowerUpType.Boost:
                 _ball.IsBoosted = false;
                 Animate(
-                    () => _ball.Speed, v => _ball.Speed = v, _ball.InitialSpeed, 
+                    () => _ball.Speed, v => _ball.Speed = v, _ball.InitialSpeed,
                         () => Animate(() => _slider.Width, v => _slider.Width = v, _slider.InitialWidth));
                 break;
             default:

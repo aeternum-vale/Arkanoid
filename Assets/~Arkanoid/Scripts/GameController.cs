@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DG.Tweening;
 using Gamelogic.Extensions;
 using NaughtyAttributes;
 using System;
@@ -24,8 +25,11 @@ public class GameController : MonoBehaviour
     [SerializeField] private PowerUpController _powerUpController;
     [SerializeField] private Slider _slider;
     [SerializeField] private Ball _ball;
+    [SerializeField] private SpriteRenderer _bottomHitIndicator;
 
     private SessionSaver _sessionSaver = new SessionSaver();
+
+    private Sequence _bottomHitIndicationSequence;
 
     private void Awake()
     {
@@ -107,11 +111,20 @@ public class GameController : MonoBehaviour
 
     private void OnBottomHit()
     {
+        IndicateBottomHit();
+
         _lives--;
         UpdateLevelStatsUI();
 
         if (_lives <= 0)
             FinishGame();
+    }
+
+    private void IndicateBottomHit()
+    {
+        _bottomHitIndicationSequence = DOTween.Sequence();
+        _bottomHitIndicationSequence.Append(_bottomHitIndicator.DOFade(1f, 0.1f).SetEase(Ease.InQuad));
+        _bottomHitIndicationSequence.Append(_bottomHitIndicator.DOFade(0f, 0.1f).SetEase(Ease.OutQuad));
     }
 
     private void OnAllBlocksDemolished() => GoToNextLevel();
@@ -201,6 +214,7 @@ public class GameController : MonoBehaviour
 
     private void RestoreInititalState()
     {
+        _bottomHitIndicationSequence?.Kill();
         _powerUpController.RestoreInitialState();
         _ball.RestoreInititalState();
         _slider.RestoreInititalState();
