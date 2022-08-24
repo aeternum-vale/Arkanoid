@@ -106,7 +106,7 @@ public class BoardGenerator : MonoBehaviour
 
     private void FillPowerUpMask()
     {
-        int powerUpCount = 5 * GetSimpleBlockMaskWeight() / (_blockRowCount * _blockColumnCount);
+        int powerUpCount = 6 * GetSimpleBlockMaskWeight() / (_blockRowCount * _blockColumnCount);
         bool even = powerUpCount % 2 == 0;
         int powerUpEvenCount = even ? powerUpCount : powerUpCount - 1;
 
