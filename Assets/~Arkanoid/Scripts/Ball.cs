@@ -91,6 +91,11 @@ public class Ball : MonoBehaviour
         _almightyParticleSystem.Clear();
         _almightyParticleSystem.Stop();
 
+        ClearTrail();
+    }
+
+    public void ClearTrail()
+    {
         _trailRenderer.Clear();
     }
 

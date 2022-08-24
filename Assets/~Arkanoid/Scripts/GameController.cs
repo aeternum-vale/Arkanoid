@@ -26,6 +26,9 @@ public class GameController : MonoBehaviour
     [SerializeField] private Slider _slider;
     [SerializeField] private Ball _ball;
     [SerializeField] private SpriteRenderer _bottomHitIndicator;
+    [Space]
+    [SerializeField] private float _bottomHitIndicationDuration = 0.5f;
+
 
     private SessionSaver _sessionSaver = new SessionSaver();
 
@@ -123,8 +126,8 @@ public class GameController : MonoBehaviour
     private void IndicateBottomHit()
     {
         _bottomHitIndicationSequence = DOTween.Sequence();
-        _bottomHitIndicationSequence.Append(_bottomHitIndicator.DOFade(1f, 0.1f).SetEase(Ease.InQuad));
-        _bottomHitIndicationSequence.Append(_bottomHitIndicator.DOFade(0f, 0.1f).SetEase(Ease.OutQuad));
+        _bottomHitIndicationSequence.Append(_bottomHitIndicator.DOFade(1f, _bottomHitIndicationDuration / 2f).SetEase(Ease.InQuad));
+        _bottomHitIndicationSequence.Append(_bottomHitIndicator.DOFade(0f, _bottomHitIndicationDuration / 2f).SetEase(Ease.OutQuad));
     }
 
     private void OnAllBlocksDemolished() => GoToNextLevel();
@@ -165,6 +168,7 @@ public class GameController : MonoBehaviour
             _boardController.RestoreSession(sessionData.Level, sessionData.DemolishedBlockGridIndexes);
 
             _ball.transform.position = new Vector3(sessionData.BallPosition.X, sessionData.BallPosition.Y, _ball.transform.position.y);
+            _ball.ClearTrail();
             _ball.Direction = new Vector3(sessionData.BallDirection.X, sessionData.BallDirection.Y, 0f);
 
             _slider.transform.position = _slider.transform.position.WithX(sessionData.SliderXPosition);

@@ -64,8 +64,7 @@ public class PowerUpController : MonoBehaviour
                 _ball.IsAlmighty = true;
                 break;
             case EPowerUpType.WiderSlider:
-                Animate(() => _slider.Width, v => _slider.Width = v, _slider.Width * 3f);
-
+                Animate(() => _slider.Width, v => _slider.Width = v, _slider.Width * 2f);
                 intervalSec *= 2;
                 break;
             case EPowerUpType.Boost:
