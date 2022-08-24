@@ -26,8 +26,8 @@ public class Slider : MonoBehaviour
         }
     }
 
-    public float InitialWidth  => _initialWidth;
-    public float BoostedWidth => _boostedWidth; 
+    public float InitialWidth => _initialWidth;
+    public float BoostedWidth => _boostedWidth;
 
     private void Awake()
     {
@@ -64,7 +64,6 @@ public class Slider : MonoBehaviour
         }
 
         transform.position = transform.position.WithX(newX);
-
     }
 
     public void RestoreInititalState()
@@ -74,5 +73,4 @@ public class Slider : MonoBehaviour
 
         Width = _initialWidth;
     }
-
 }

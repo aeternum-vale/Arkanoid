@@ -5,7 +5,9 @@ using UnityEngine.UI;
 public class MenuUIController : MonoBehaviour
 {
     public event Action NewGameButtonClick;
+
     public event Action ContinueButtonClick;
+
     public event Action QuitButtonClick;
 
     [SerializeField] private Button _newGameButton;
@@ -23,6 +25,7 @@ public class MenuUIController : MonoBehaviour
         _continueButton.onClick.AddListener(OnContinueButtonClick);
         _quitButton.onClick.AddListener(OnQuitButtonClick);
     }
+
     private void RemoveListeners()
     {
         _newGameButton.onClick.RemoveListener(OnNewGameButtonClick);
@@ -36,7 +39,9 @@ public class MenuUIController : MonoBehaviour
     }
 
     private void OnNewGameButtonClick() => NewGameButtonClick?.Invoke();
+
     private void OnContinueButtonClick() => ContinueButtonClick?.Invoke();
+
     private void OnQuitButtonClick() => QuitButtonClick?.Invoke();
 
     private void OnDestroy() => RemoveListeners();
