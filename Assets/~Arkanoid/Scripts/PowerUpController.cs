@@ -70,7 +70,8 @@ public class PowerUpController : MonoBehaviour
                 break;
 
             case EPowerUpType.WiderSlider:
-                Animate(() => _slider.Width, v => _slider.Width = v, _slider.InitialWidth * 2f);
+                if (_powerUpCount[EPowerUpType.Boost] == 0)
+                    Animate(() => _slider.Width, v => _slider.Width = v, _slider.InitialWidth * 2f);
                 intervalSec *= 2;
                 break;
 
@@ -106,10 +107,13 @@ public class PowerUpController : MonoBehaviour
                 break;
 
             case EPowerUpType.Boost:
+                float sliderWidth = _slider.InitialWidth;
+                sliderWidth *= (_powerUpCount[EPowerUpType.WiderSlider] != 0) ? 2 : 1;
+
                 _ball.IsBoosted = false;
                 Animate(
                     () => _ball.Speed, v => _ball.Speed = v, _ball.InitialSpeed,
-                        () => Animate(() => _slider.Width, v => _slider.Width = v, _slider.InitialWidth));
+                        () => Animate(() => _slider.Width, v => _slider.Width = v, sliderWidth));
                 break;
 
             default:
