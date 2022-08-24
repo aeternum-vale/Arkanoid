@@ -9,7 +9,9 @@ using UnityEngine.UI;
 public class UIController : MonoBehaviour
 {
     public event Action PauseMenuBackButtonClick;
+
     public event Action PauseMenuSaveButtonClick;
+
     public event Action PauseMenuQuitButtonClick;
 
     [SerializeField] private TMP_Text _levelText;
@@ -115,11 +117,9 @@ public class UIController : MonoBehaviour
         _gameOverMessage.SetActive(false);
     }
 
-
     private void OnDestroy()
     {
         RemoveListeners();
         _lifetimeCTS?.Cancel();
     }
-
 }

@@ -17,18 +17,20 @@ public class GameController : MonoBehaviour
 
     [Space]
     [SerializeField] private int _maxLivesNumber = 3;
+
     [SerializeField] [ReadOnly] private int _lives = 3;
 
     [Space]
     [SerializeField] private BoardController _boardController;
+
     [SerializeField] private UIController _uiController;
     [SerializeField] private PowerUpController _powerUpController;
     [SerializeField] private Slider _slider;
     [SerializeField] private Ball _ball;
     [SerializeField] private SpriteRenderer _bottomHitIndicator;
+
     [Space]
     [SerializeField] private float _bottomHitIndicationDuration = 0.5f;
-
 
     private SessionSaver _sessionSaver = new SessionSaver();
 

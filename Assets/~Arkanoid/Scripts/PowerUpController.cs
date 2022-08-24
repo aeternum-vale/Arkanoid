@@ -3,7 +3,6 @@ using DG.Tweening;
 using DG.Tweening.Core;
 using NaughtyAttributes;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -54,8 +53,14 @@ public class PowerUpController : MonoBehaviour
         EPowerUpType powerUpType = (EPowerUpType)_powerUpValues.GetValue(Random.Range(1, _powerUpValues.Length));
         Debug.Log($"powerUpType={powerUpType}");
 
-        _powerUpCount[powerUpType]++;
+        float intervalSec = EnablePowerUp(powerUpType);
+        await UniTask.Delay(TimeSpan.FromSeconds(intervalSec), cancellationToken: _cts.Token);
+        DisablePowerUp(powerUpType);
+    }
 
+    private float EnablePowerUp(EPowerUpType powerUpType)
+    {
+        _powerUpCount[powerUpType]++;
         float intervalSec = _avgPowerUpIntervalSec;
 
         switch (powerUpType)
@@ -63,10 +68,12 @@ public class PowerUpController : MonoBehaviour
             case EPowerUpType.AlmightyBall:
                 _ball.IsAlmighty = true;
                 break;
+
             case EPowerUpType.WiderSlider:
                 Animate(() => _slider.Width, v => _slider.Width = v, _slider.Width * 2f);
                 intervalSec *= 2;
                 break;
+
             case EPowerUpType.Boost:
                 _ball.IsBoosted = true;
                 Animate(
@@ -74,12 +81,16 @@ public class PowerUpController : MonoBehaviour
                         () => Animate(() => _ball.Speed, v => _ball.Speed = v, _ball.InitialSpeed * 5f));
                 intervalSec /= 1.5f;
                 break;
+
             default:
                 throw new Exception("invalid power-up type");
         }
 
-        await UniTask.Delay(TimeSpan.FromSeconds(intervalSec), cancellationToken: _cts.Token);
+        return intervalSec;
+    }
 
+    private void DisablePowerUp(EPowerUpType powerUpType)
+    {
         _powerUpCount[powerUpType]--;
 
         if (_powerUpCount[powerUpType] != 0) return;
@@ -89,15 +100,18 @@ public class PowerUpController : MonoBehaviour
             case EPowerUpType.AlmightyBall:
                 _ball.IsAlmighty = false;
                 break;
+
             case EPowerUpType.WiderSlider:
                 Animate(() => _slider.Width, v => _slider.Width = v, _slider.InitialWidth);
                 break;
+
             case EPowerUpType.Boost:
                 _ball.IsBoosted = false;
                 Animate(
                     () => _ball.Speed, v => _ball.Speed = v, _ball.InitialSpeed,
                         () => Animate(() => _slider.Width, v => _slider.Width = v, _slider.InitialWidth));
                 break;
+
             default:
                 throw new Exception("invalid power-up type");
         }

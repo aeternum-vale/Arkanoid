@@ -5,6 +5,7 @@ using UnityEngine;
 public class Ball : MonoBehaviour
 {
     public event Action<(GameObject, Vector2)> BlockHit;
+
     public event Action BottomHit;
 
     [SerializeField] private Transform _initialPosition;
@@ -15,16 +16,19 @@ public class Ball : MonoBehaviour
 
     [Space]
     [SerializeField] private Camera _mainCamera;
+
     [SerializeField] private ParticleSystem _almightyParticleSystem;
     [SerializeField] private SpriteRenderer _spriteRenderer;
     [SerializeField] private TrailRenderer _trailRenderer;
 
     [Space]
     [ReadOnly] [SerializeField] private GameObject _lastCollision1;
+
     [ReadOnly] [SerializeField] private GameObject _lastCollision2;
 
     [Space]
     [SerializeField] private Color _normal;
+
     [SerializeField] private Color _trailNormal;
     [SerializeField] private Color _almighty;
 
@@ -33,9 +37,11 @@ public class Ball : MonoBehaviour
     private ContactFilter2D _contactFilter2D;
     private float _radius;
     private float _initialSpeed;
+    private Vector3 _nextPosition;
 
     public bool IsBoosted { get; set; }
     public Vector3 Direction { get => _direction; set => _direction = value; }
+
     public bool IsAlmighty
     {
         get => _isAlmighty;
@@ -56,6 +62,7 @@ public class Ball : MonoBehaviour
             _isAlmighty = value;
         }
     }
+
     public bool IsMoving { get => _isMoving; set => _isMoving = value; }
     public float Speed { get => _speed; set => _speed = value; }
     public float InitialSpeed => _initialSpeed;
@@ -157,8 +164,6 @@ public class Ball : MonoBehaviour
         return false;
     }
 
-    Vector3 _nextPosition;
-
     private void Update()
     {
         if (Time.timeScale == 0) return;
@@ -258,7 +263,6 @@ public class Ball : MonoBehaviour
         MoveTo(_nextPosition);
     }
 
-
     private void RefineHitCounts(ref int hitCount, ref RaycastHit2D hit1, RaycastHit2D hit2)
     {
         if (hitCount == 1)
@@ -289,7 +293,6 @@ public class Ball : MonoBehaviour
     private bool IsOutsideOfTheScreen() =>
         !new Rect(0, 0, 1, 1).Contains(_mainCamera.WorldToViewportPoint(transform.position));
 
-
     private void MoveTo(Vector3 nextPosition)
     {
         if (!IsMoving) return;
@@ -297,7 +300,6 @@ public class Ball : MonoBehaviour
         Debug.DrawLine(transform.position, nextPosition, Color.red, 0.3f);
         transform.position = nextPosition;
     }
-
 
     private static float GetVectorDirectness(Vector2 vector)
     {
@@ -309,5 +311,4 @@ public class Ball : MonoBehaviour
     {
         return GetVectorDirectness(a) > GetVectorDirectness(b) ? a : b;
     }
-
 }
