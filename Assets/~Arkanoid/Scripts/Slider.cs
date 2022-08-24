@@ -13,6 +13,7 @@ public class Slider : MonoBehaviour
     private float _rightLimit;
     private SpriteRenderer _spriteRenderer;
     private float _initialWidth;
+    private float _boostedWidth;
 
     public float Width
     {
@@ -25,11 +26,15 @@ public class Slider : MonoBehaviour
         }
     }
 
+    public float InitialWidth  => _initialWidth;
+    public float BoostedWidth => _boostedWidth; 
+
     private void Awake()
     {
         _mainCamera = Camera.main;
         _spriteRenderer = GetComponent<SpriteRenderer>();
         _initialWidth = Width;
+        _boostedWidth = _mainCamera.orthographicSize * 2f * _mainCamera.aspect;
         CalculateSliderLimits();
     }
 

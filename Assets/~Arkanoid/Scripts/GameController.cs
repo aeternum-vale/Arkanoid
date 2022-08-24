@@ -2,18 +2,13 @@ using Cysharp.Threading.Tasks;
 using Gamelogic.Extensions;
 using NaughtyAttributes;
 using System;
-using System.Threading;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using Random = UnityEngine.Random;
 using ReadOnly = NaughtyAttributes.ReadOnlyAttribute;
-
 
 public class GameController : MonoBehaviour
 {
     private const string HighscoreKey = "HighscoreKey";
-
-    private Camera _mainCamera;
 
     [SerializeField] [ReadOnly] private int _level;
     [SerializeField] [ReadOnly] private int _score;
@@ -24,31 +19,19 @@ public class GameController : MonoBehaviour
     [SerializeField] [ReadOnly] private int _lives = 3;
 
     [Space]
-    [SerializeField] private float _avgPowerUpIntervalSec = 5f;
-    private CancellationTokenSource _powerUpCTS;
-
-    [Space]
     [SerializeField] private BoardController _boardController;
     [SerializeField] private UIController _uiController;
+    [SerializeField] private PowerUpController _powerUpController;
     [SerializeField] private Slider _slider;
     [SerializeField] private Ball _ball;
 
     private SessionSaver _sessionSaver = new SessionSaver();
 
-    private float _sliderInitialWidth;
-    private float _ballInitialSpeed;
-
-
     private void Awake()
     {
         Application.targetFrameRate = 60;
-
-        AddListeners();
-        _mainCamera = Camera.main;
         _highscore = PlayerPrefs.GetInt(HighscoreKey, 0);
-
-        _sliderInitialWidth = _slider.Width;
-        _ballInitialSpeed = _ball.Speed;
+        AddListeners();
     }
 
     private void AddListeners()
@@ -80,9 +63,7 @@ public class GameController : MonoBehaviour
     private void Start()
     {
         if (PlayerPrefs.GetInt(Constants.ContinueModeKey) == 1)
-        {
             RestoreSession();
-        }
         else
         {
             _level = 1;
@@ -108,64 +89,21 @@ public class GameController : MonoBehaviour
         }
     }
 
-
     private void OnBallDemolishedBlock(Block block)
     {
         _score += block.HitPointsMaxNumber;
         UpdateLevelStatsUI();
     }
 
-    private async void OnBallHitPowerUp()
+    private void OnBallHitPowerUp()
     {
-        Array values = Enum.GetValues(typeof(EPowerUpType));
-        EPowerUpType powerUpType = (EPowerUpType)values.GetValue(Random.Range(1, values.Length));
-
-        Debug.Log($"powerUpType={powerUpType}");
-        float intervalSec = _avgPowerUpIntervalSec;
-
-        switch (powerUpType)
-        {
-            case EPowerUpType.AlmightyBall:
-                _ball.IsAlmighty = true;
-                break;
-            case EPowerUpType.WiderSlider:
-                _slider.Width *= 1.5f;
-                intervalSec *= 2;
-                break;
-            case EPowerUpType.Boost:
-                _slider.Width = _mainCamera.orthographicSize * 2f * _mainCamera.aspect;
-                _ball.Speed *= 10;
-                intervalSec /= 2;
-                break;
-            default:
-                throw new Exception("invalid power-up type");
-        }
-
-        _powerUpCTS = new CancellationTokenSource();
-        await UniTask.Delay(TimeSpan.FromSeconds(intervalSec), cancellationToken: _powerUpCTS.Token);
-
-        switch (powerUpType)
-        {
-            case EPowerUpType.AlmightyBall:
-                _ball.IsAlmighty = false;
-                break;
-            case EPowerUpType.WiderSlider:
-                _slider.Width /= _sliderInitialWidth;
-                break;
-            case EPowerUpType.Boost:
-                _ball.Speed /= 10;
-                _slider.Width = _sliderInitialWidth;
-                break;
-            default:
-                throw new Exception("invalid power-up type");
-        }
+        _powerUpController.PowerUp();
     }
 
     private void PrepareBoard()
     {
         _boardController.PrepareNewBoard(_level);
     }
-
 
     private void OnBottomHit()
     {
@@ -176,16 +114,9 @@ public class GameController : MonoBehaviour
             FinishGame();
     }
 
+    private void OnAllBlocksDemolished() => GoToNextLevel();
 
-    private void OnAllBlocksDemolished()
-    {
-        GoToNextLevel();
-    }
-
-    private void OnPauseMenuQuitButtonClick()
-    {
-        GoToMenuScene();
-    }
+    private void OnPauseMenuQuitButtonClick() => GoToMenuScene();
 
     private void GoToMenuScene()
     {
@@ -239,7 +170,6 @@ public class GameController : MonoBehaviour
         ResumeGame();
     }
 
-
     private async void FinishGame()
     {
         PauseGame();
@@ -252,6 +182,7 @@ public class GameController : MonoBehaviour
 
         _uiController.ShowGameOverMessage(_score, _highscore);
 
+        await UniTask.Delay(TimeSpan.FromSeconds(2f), DelayType.Realtime);
         await UniTask.WaitUntil(() => Input.anyKey);
 
         GoToMenuScene();
@@ -270,12 +201,9 @@ public class GameController : MonoBehaviour
 
     private void RestoreInititalState()
     {
-        _powerUpCTS?.Cancel();
+        _powerUpController.RestoreInitialState();
         _ball.RestoreInititalState();
         _slider.RestoreInititalState();
-
-        _ball.Speed = _ballInitialSpeed;
-        _slider.Width = _sliderInitialWidth;
     }
 
     private void UpdateLevelStatsUI()
@@ -297,19 +225,9 @@ public class GameController : MonoBehaviour
         ResumeGame();
     }
 
-    private void PauseGame()
-    {
-        Time.timeScale = 0;
-    }
+    private void PauseGame() => Time.timeScale = 0;
 
-    private void ResumeGame()
-    {
-        Time.timeScale = 1;
-    }
+    private void ResumeGame() => Time.timeScale = 1;
 
-    private void OnDestroy()
-    {
-        RemoveListeners();
-        _powerUpCTS?.Cancel();
-    }
+    private void OnDestroy() => RemoveListeners();
 }

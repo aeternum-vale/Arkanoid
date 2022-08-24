@@ -32,7 +32,9 @@ public class Ball : MonoBehaviour
     private bool _isAlmighty = false;
     private ContactFilter2D _contactFilter2D;
     private float _radius;
+    private float _initialSpeed;
 
+    public bool IsBoosted { get; set; }
     public Vector3 Direction { get => _direction; set => _direction = value; }
     public bool IsAlmighty
     {
@@ -43,12 +45,11 @@ public class Ball : MonoBehaviour
             {
                 _almightyParticleSystem.gameObject.SetActive(true);
                 _almightyParticleSystem.Play();
-                //_spriteRenderer.color = _almighty;
                 _trailRenderer.startColor = _almighty;
-            } else
+            }
+            else
             {
                 _almightyParticleSystem.Stop();
-                //_spriteRenderer.color = _normal;
                 _trailRenderer.startColor = _trailNormal;
             }
 
@@ -57,9 +58,11 @@ public class Ball : MonoBehaviour
     }
     public bool IsMoving { get => _isMoving; set => _isMoving = value; }
     public float Speed { get => _speed; set => _speed = value; }
+    public float InitialSpeed => _initialSpeed;
 
     private void Awake()
     {
+        _initialSpeed = _speed;
         _radius = _spriteRenderer.size.x / 2f;
 
         int layerMask = 1 << Constants.BlocksLayer;
@@ -77,11 +80,13 @@ public class Ball : MonoBehaviour
     {
         transform.position = _initialPosition.position;
         _direction = _initialPosition.up;
+        _speed = _initialSpeed;
 
         _lastCollision1 = null;
         _lastCollision2 = null;
 
         IsAlmighty = false;
+        IsBoosted = false;
 
         _almightyParticleSystem.Clear();
         _almightyParticleSystem.Stop();
@@ -184,7 +189,7 @@ public class Ball : MonoBehaviour
 
         HandleBlockHit(initialDirection, distance, hitCount, ref hit1, ref hit2);
 
-        if (IsBottomHit(hit1, hit2, hitCount, out _))
+        if (!IsBoosted && IsBottomHit(hit1, hit2, hitCount, out _))
             BottomHit?.Invoke();
     }
 
