@@ -6,6 +6,7 @@ using UnityEngine;
 public class BoardController : MonoBehaviour
 {
     public event Action BallHitPowerUp;
+    public event Action BallHitBlock;
     public event Action<Block> BallDemolishedBlock;
     public event Action AllBlocksDemolished;
 
@@ -71,7 +72,8 @@ public class BoardController : MonoBehaviour
             if (block.IsPowerUp)
                 BallHitPowerUp?.Invoke();
         }
-
+        else
+            BallHitBlock?.Invoke();
     }
 
     private bool AreAllBlocksDemolished()

@@ -36,6 +36,12 @@ public class GameController : MonoBehaviour
 
     private Sequence _bottomHitIndicationSequence;
 
+    [Space]
+    [SerializeField] private AudioSource _audioSource;
+    [SerializeField] private AudioClip _beepSound;
+    [SerializeField] private AudioClip _destroySound;
+
+
     private void Awake()
     {
         Application.targetFrameRate = 60;
@@ -50,6 +56,7 @@ public class GameController : MonoBehaviour
         _boardController.AllBlocksDemolished += OnAllBlocksDemolished;
         _boardController.BallHitPowerUp += OnBallHitPowerUp;
         _boardController.BallDemolishedBlock += OnBallDemolishedBlock;
+        _boardController.BallHitBlock += OnBallHitBlock;
 
         _uiController.PauseMenuBackButtonClick += OnPauseMenuBackButtonClick;
         _uiController.PauseMenuSaveButtonClick += OnPauseMenuSaveButtonClick;
@@ -63,6 +70,7 @@ public class GameController : MonoBehaviour
         _boardController.AllBlocksDemolished -= OnAllBlocksDemolished;
         _boardController.BallHitPowerUp -= OnBallHitPowerUp;
         _boardController.BallDemolishedBlock -= OnBallDemolishedBlock;
+        _boardController.BallHitBlock -= OnBallHitBlock;
 
         _uiController.PauseMenuBackButtonClick -= OnPauseMenuBackButtonClick;
         _uiController.PauseMenuSaveButtonClick -= OnPauseMenuSaveButtonClick;
@@ -98,8 +106,19 @@ public class GameController : MonoBehaviour
         }
     }
 
+    private void PrepareBoard()
+    {
+        _boardController.PrepareNewBoard(_level);
+    }
+
+    private void OnBallHitBlock()
+    {
+        _audioSource.PlayOneShot(_beepSound);
+    }
+
     private void OnBallDemolishedBlock(Block block)
     {
+        _audioSource.PlayOneShot(_destroySound);
         _score += block.HitPointsMaxNumber;
         UpdateLevelStatsUI();
     }
@@ -107,11 +126,6 @@ public class GameController : MonoBehaviour
     private void OnBallHitPowerUp()
     {
         _powerUpController.PowerUp();
-    }
-
-    private void PrepareBoard()
-    {
-        _boardController.PrepareNewBoard(_level);
     }
 
     private void OnBottomHit()

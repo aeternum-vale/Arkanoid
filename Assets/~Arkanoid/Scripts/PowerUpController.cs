@@ -70,7 +70,7 @@ public class PowerUpController : MonoBehaviour
                 break;
 
             case EPowerUpType.WiderSlider:
-                Animate(() => _slider.Width, v => _slider.Width = v, _slider.Width * 2f);
+                Animate(() => _slider.Width, v => _slider.Width = v, _slider.InitialWidth * 2f);
                 intervalSec *= 2;
                 break;
 
